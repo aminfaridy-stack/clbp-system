@@ -8,7 +8,6 @@ import LanguageToggle from '../../components/ui/LanguageToggle';
 // Import components
 import RiskPredictionPanel from './components/RiskPredictionPanel';
 import AssessmentScoreCard from './components/AssessmentScoreCard';
-import NordicBodyMap from './components/NordicBodyMap';
 import TrendAnalysisChart from './components/TrendAnalysisChart';
 import ActionPanel from './components/ActionPanel';
 
@@ -127,14 +126,6 @@ const AssessmentResults = () => {
       normalRange: currentLanguage === 'fa' ? '۰-۳: خفیف، ۴-۶: متوسط، ۷-۱۰: شدید' : '0-3: Mild, 4-6: Moderate, 7-10: Severe',
       clinicalNotes: currentLanguage === 'fa' ? 'درد متوسط تا شدید' : 'Moderate to severe pain'
     }
-  ];
-
-  // Mock pain regions for Nordic Body Map
-  const mockPainRegions = [
-    { region: 'lower_back', severity: 8 },
-    { region: 'hips', severity: 5 },
-    { region: 'shoulders', severity: 3 },
-    { region: 'neck', severity: 2 }
   ];
 
   const handleMetricToggle = (metricKey) => {
@@ -279,37 +270,25 @@ const AssessmentResults = () => {
             onViewDetails={() => console.log('View risk details')}
           />
 
-          {/* Assessment Scores and Body Map */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            {/* Assessment Score Cards */}
-            <div className="xl:col-span-2 space-y-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-semibold text-foreground font-heading">
-                  {currentLanguage === 'fa' ? 'نتایج پرسشنامه‌ها' : 'Questionnaire Results'}
-                </h2>
-                <div className="text-sm text-muted-foreground">
-                  {mockAssessments?.length} {currentLanguage === 'fa' ? 'ارزیابی' : 'assessments'}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {mockAssessments?.map((assessment) => (
-                  <AssessmentScoreCard
-                    key={assessment?.id}
-                    assessment={assessment}
-                    onViewDetails={handleViewDetails}
-                  />
-                ))}
+          {/* Assessment Scores */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-semibold text-foreground font-heading">
+                {currentLanguage === 'fa' ? 'نتایج پرسشنامه‌ها' : 'Questionnaire Results'}
+              </h2>
+              <div className="text-sm text-muted-foreground">
+                {mockAssessments?.length} {currentLanguage === 'fa' ? 'ارزیابی' : 'assessments'}
               </div>
             </div>
 
-            {/* Nordic Body Map */}
-            <div className="xl:col-span-1">
-              <NordicBodyMap
-                painRegions={mockPainRegions}
-                onRegionClick={handleRegionClick}
-                showLegend={true}
-              />
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {mockAssessments?.map((assessment) => (
+                <AssessmentScoreCard
+                  key={assessment?.id}
+                  assessment={assessment}
+                  onViewDetails={handleViewDetails}
+                />
+              ))}
             </div>
           </div>
 

@@ -11,6 +11,7 @@ import DataVisualizationPanels from './components/DataVisualizationPanels';
 import ModelPerformanceMonitoring from './components/ModelPerformanceMonitoring';
 import AdminToolbar from './components/AdminToolbar';
 import AdvancedFilters from './components/AdvancedFilters';
+import SettingsPanel from './components/SettingsPanel';
 
 const AdminDashboard = () => {
   const [currentLanguage, setCurrentLanguage] = useState('en');
@@ -139,6 +140,11 @@ const AdminDashboard = () => {
       id: 'questionnaires',
       name: currentLanguage === 'fa' ? 'پرسشنامه‌ها' : 'Questionnaires',
       icon: 'ClipboardList'
+    },
+    {
+      id: 'settings',
+      name: currentLanguage === 'fa' ? 'تنظیمات' : 'Settings',
+      icon: 'Settings'
     }
   ];
 
@@ -186,7 +192,6 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <LanguageToggle position="top-right" />
       <div className="flex">
         <Sidebar 
           isCollapsed={sidebarCollapsed}
@@ -305,6 +310,10 @@ const AdminDashboard = () => {
                   performance={dashboardData?.metrics}
                   currentLanguage={currentLanguage}
                 />
+              )}
+
+              {activeView === 'settings' && (
+                <SettingsPanel currentLanguage={currentLanguage} />
               )}
             </div>
 

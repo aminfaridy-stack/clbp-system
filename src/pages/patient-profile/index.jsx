@@ -6,7 +6,6 @@ import LanguageToggle from '../../components/ui/LanguageToggle';
 import PatientHeader from './components/PatientHeader';
 import AssessmentTimeline from './components/AssessmentTimeline';
 import TrendAnalysis from './components/TrendAnalysis';
-import BodyMapVisualization from './components/BodyMapVisualization';
 import ClinicalNotes from './components/ClinicalNotes';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
@@ -74,11 +73,6 @@ const PatientProfile = () => {
       id: 'trends',
       name: currentLanguage === 'fa' ? 'روندها' : 'Trends',
       icon: 'TrendingUp'
-    },
-    {
-      id: 'bodymap',
-      name: currentLanguage === 'fa' ? 'نقشه بدن' : 'Body Map',
-      icon: 'User'
     },
     {
       id: 'notes',
@@ -235,10 +229,6 @@ const PatientProfile = () => {
 
               {activeTab === 'trends' && (
                 <TrendAnalysis currentLanguage={currentLanguage} />
-              )}
-
-              {activeTab === 'bodymap' && (
-                <BodyMapVisualization currentLanguage={currentLanguage} />
               )}
 
               {activeTab === 'notes' && (

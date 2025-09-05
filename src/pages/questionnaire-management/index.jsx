@@ -61,7 +61,6 @@ const QuestionnaireManagement = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <LanguageToggle position="top-right" />
       <div className="flex">
         <Sidebar
           isCollapsed={sidebarCollapsed}

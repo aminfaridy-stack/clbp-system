@@ -80,7 +80,7 @@ const LanguageToggle = ({
         size={size}
         onClick={toggleLanguage}
         disabled={isChanging}
-        className={`flex items-center space-x-2 rtl:space-x-reverse transition-clinical ${
+        className={`flex items-center gap-2 rtl:space-x-reverse transition-clinical flex-shrink-0 whitespace-nowrap ${
           isChanging ? 'opacity-75' : ''
         }`}
         title={currentLanguage === 'fa' ? 'تغییر به انگلیسی' : 'Switch to Farsi'}

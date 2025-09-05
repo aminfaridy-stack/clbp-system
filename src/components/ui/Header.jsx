@@ -1,20 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
+import LanguageToggle, { useLanguage } from './LanguageToggle';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState('en');
+  const currentLanguage = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
-
-  const toggleLanguage = () => {
-    const newLanguage = currentLanguage === 'en' ? 'fa' : 'en';
-    setCurrentLanguage(newLanguage);
-    document.documentElement?.setAttribute('dir', newLanguage === 'fa' ? 'rtl' : 'ltr');
-    document.documentElement?.setAttribute('lang', newLanguage);
-  };
 
   const isPatientRoute = ['/patient-registration', '/patient-login', '/multi-step-assessment', '/assessment-results']?.includes(location?.pathname);
   const isProfessionalRoute = ['/admin-dashboard', '/patient-profile']?.includes(location?.pathname);
@@ -82,17 +76,7 @@ const Header = () => {
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4 rtl:space-x-reverse">
             {/* Language Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleLanguage}
-              className="flex items-center space-x-2 rtl:space-x-reverse"
-            >
-              <Icon name="Globe" size={16} />
-              <span className="text-sm font-medium">
-                {currentLanguage === 'fa' ? 'EN' : 'فا'}
-              </span>
-            </Button>
+            <LanguageToggle position="header" size="sm" showLabel={true} />
 
             {/* Professional Access */}
             {isPatientRoute && (
