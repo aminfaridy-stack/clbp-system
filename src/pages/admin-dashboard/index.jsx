@@ -134,6 +134,11 @@ const AdminDashboard = () => {
       id: 'monitoring',
       name: currentLanguage === 'fa' ? 'نظارت بر مدل' : 'Model Monitoring',
       icon: 'Activity'
+    },
+    {
+      id: 'questionnaires',
+      name: currentLanguage === 'fa' ? 'پرسشنامه‌ها' : 'Questionnaires',
+      icon: 'ClipboardList'
     }
   ];
 
@@ -221,7 +226,13 @@ const AdminDashboard = () => {
                 {viewTabs?.map((tab) => (
                   <button
                     key={tab?.id}
-                    onClick={() => setActiveView(tab?.id)}
+                    onClick={() => {
+                      if (tab.id === 'questionnaires') {
+                        navigate('/questionnaire-management');
+                      } else {
+                        setActiveView(tab?.id);
+                      }
+                    }}
                     className={`flex items-center space-x-2 rtl:space-x-reverse px-4 py-2 rounded-md text-sm font-medium transition-clinical whitespace-nowrap ${
                       activeView === tab?.id
                         ? 'bg-primary text-primary-foreground'
