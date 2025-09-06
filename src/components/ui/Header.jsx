@@ -2,30 +2,54 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
-import LanguageToggle, { useLanguage } from './LanguageToggle';
+import { useLanguage } from './LanguageToggle';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [session, setSession] = useState(null);
   const currentLanguage = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isPatientRoute = ['/patient-registration', '/patient-login', '/multi-step-assessment', '/assessment-results']?.includes(location?.pathname);
-  const isProfessionalRoute = ['/admin-dashboard', '/patient-profile']?.includes(location?.pathname);
+  useEffect(() => {
+    // Check for user session to determine if logged in
+    const userSession = localStorage.getItem('userSession');
+    if (userSession) {
+      try {
+        setSession(JSON.parse(userSession));
+      } catch (error) {
+        localStorage.removeItem('userSession');
+      }
+    }
+  }, [location.pathname]); // Re-check on path change
 
-  const patientNavItems = [
-    { path: '/patient-registration', label: currentLanguage === 'fa' ? 'ثبت نام' : 'Registration', icon: 'UserPlus' },
-    { path: '/patient-login', label: currentLanguage === 'fa' ? 'ورود' : 'Login', icon: 'LogIn' },
-    { path: '/multi-step-assessment', label: currentLanguage === 'fa' ? 'ارزیابی' : 'Assessment', icon: 'ClipboardList' },
-    { path: '/assessment-results', label: currentLanguage === 'fa' ? 'نتایج' : 'Results', icon: 'BarChart3' }
-  ];
+  // --- Define Navigation Items based on context ---
+  const getNavItems = () => {
+    const professionalRoutes = ['/admin-dashboard', '/patient-profile'];
+    const patientLoggedInRoutes = ['/multi-step-assessment', '/assessment-results'];
 
-  const professionalNavItems = [
-    { path: '/patient-profile', label: currentLanguage === 'fa' ? 'پروفایل بیمار' : 'Patient Profile', icon: 'User' },
-    { path: '/admin-dashboard', label: currentLanguage === 'fa' ? 'داشبورد مدیریت' : 'Admin Dashboard', icon: 'LayoutDashboard' }
-  ];
+    // Professional/Admin View
+    if (professionalRoutes.includes(location.pathname)) {
+      return [
+        { path: '/patient-profile', label: currentLanguage === 'fa' ? 'پروفایل بیمار' : 'Patient Profile', icon: 'User' },
+        { path: '/admin-dashboard', label: currentLanguage === 'fa' ? 'داشبورد مدیریت' : 'Admin Dashboard', icon: 'LayoutDashboard' }
+      ];
+    }
 
-  const currentNavItems = isPatientRoute ? patientNavItems : professionalNavItems;
+    // Logged-in Patient View (Assessment/Results)
+    if (session && patientLoggedInRoutes.includes(location.pathname)) {
+      // Per user request, show no selectable menu items to enforce the linear flow
+      return [];
+    }
+
+    // Default Public/Logged-out View
+    return [
+      { path: '/patient-login', label: currentLanguage === 'fa' ? 'ورود' : 'Login', icon: 'LogIn' },
+      { path: '/patient-registration', label: currentLanguage === 'fa' ? 'ثبت نام' : 'Registration', icon: 'UserPlus' }
+    ];
+  };
+
+  const currentNavItems = getNavItems();
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -59,40 +83,24 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8 rtl:space-x-reverse">
-            {currentNavItems?.map((item) => (
+            {currentNavItems.map((item) => (
               <button
-                key={item?.path}
-                onClick={() => handleNavigation(item?.path)}
+                key={item.path}
+                onClick={() => handleNavigation(item.path)}
                 className={`nav-item-clinical ${
-                  location?.pathname === item?.path ? 'active' : ''
+                  location.pathname === item.path ? 'active' : ''
                 } flex items-center space-x-2 rtl:space-x-reverse px-3 py-2 rounded-md text-sm font-medium transition-clinical`}
               >
-                <Icon name={item?.icon} size={16} />
-                <span>{item?.label}</span>
+                <Icon name={item.icon} size={16} />
+                <span>{item.label}</span>
               </button>
             ))}
           </nav>
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4 rtl:space-x-reverse">
-            {/* Language Toggle */}
-            <LanguageToggle position="header" size="sm" showLabel={true} />
-
-            {/* Professional Access */}
-            {isPatientRoute && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/admin-dashboard')}
-                iconName="Shield"
-                iconPosition="left"
-              >
-                {currentLanguage === 'fa' ? 'دسترسی حرفه‌ای' : 'Professional Access'}
-              </Button>
-            )}
-
-            {/* Patient Portal */}
-            {isProfessionalRoute && (
+             {/* Patient Portal Button (only in admin area) */}
+            {professionalRoutes.includes(location.pathname) && (
               <Button
                 variant="outline"
                 size="sm"
@@ -105,17 +113,21 @@ const Header = () => {
             )}
 
             {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              <Icon name={isMenuOpen ? "X" : "Menu"} size={20} />
-            </Button>
+            <div className="md:hidden">
+             {currentNavItems.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                >
+                  <Icon name={isMenuOpen ? "X" : "Menu"} size={20} />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
       {/* Mobile Navigation Menu */}
       {isMenuOpen && (
         <>
@@ -128,38 +140,18 @@ const Header = () => {
               <Logo />
             </div>
             <nav className="p-4 space-y-2">
-              {currentNavItems?.map((item) => (
+              {currentNavItems.map((item) => (
                 <button
-                  key={item?.path}
-                  onClick={() => handleNavigation(item?.path)}
+                  key={item.path}
+                  onClick={() => handleNavigation(item.path)}
                   className={`w-full nav-item-clinical ${
-                    location?.pathname === item?.path ? 'active' : ''
+                    location.pathname === item.path ? 'active' : ''
                   } flex items-center space-x-3 rtl:space-x-reverse px-3 py-3 rounded-md text-sm font-medium transition-clinical`}
                 >
-                  <Icon name={item?.icon} size={18} />
-                  <span>{item?.label}</span>
+                  <Icon name={item.icon} size={18} />
+                  <span>{item.label}</span>
                 </button>
               ))}
-              
-              <div className="pt-4 mt-4 border-t border-border">
-                {isPatientRoute ? (
-                  <button
-                    onClick={() => handleNavigation('/admin-dashboard')}
-                    className="w-full nav-item-clinical flex items-center space-x-3 rtl:space-x-reverse px-3 py-3 rounded-md text-sm font-medium transition-clinical"
-                  >
-                    <Icon name="Shield" size={18} />
-                    <span>{currentLanguage === 'fa' ? 'دسترسی حرفه‌ای' : 'Professional Access'}</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleNavigation('/patient-login')}
-                    className="w-full nav-item-clinical flex items-center space-x-3 rtl:space-x-reverse px-3 py-3 rounded-md text-sm font-medium transition-clinical"
-                  >
-                    <Icon name="Users" size={18} />
-                    <span>{currentLanguage === 'fa' ? 'پورتال بیمار' : 'Patient Portal'}</span>
-                  </button>
-                )}
-              </div>
             </nav>
           </div>
         </>

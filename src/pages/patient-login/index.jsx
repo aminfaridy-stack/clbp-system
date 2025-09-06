@@ -5,6 +5,7 @@ import LanguageToggle from '../../components/ui/LanguageToggle';
 import LoginForm from './components/LoginForm';
 import SecurityFeatures from './components/SecurityFeatures';
 import AccessibilityInfo from './components/AccessibilityInfo';
+import Footer from '../../components/ui/Footer';
 
 const PatientLogin = () => {
   const navigate = useNavigate();
@@ -53,18 +54,7 @@ const PatientLogin = () => {
         </div>
       </main>
       {/* Footer */}
-      <footer className="bg-card border-t border-border mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground font-caption">
-              © {new Date()?.getFullYear()} CLBP Predictive System. All rights reserved.
-            </p>
-            <p className="text-xs text-muted-foreground mt-2 font-caption">
-              Advanced Medical Assessment Platform
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
