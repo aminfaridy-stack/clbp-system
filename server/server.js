@@ -6,9 +6,8 @@ import settingsRoutes from './routes/settings.js';
 import reportsRoutes from './routes/reports.js';
 import userRoutes from './routes/users.js';
 import predictRoutes from './routes/predict.js';
-import modelRoutes from './routes/models.js';
 import dataRoutes from './routes/data.js';
-import analysisRoutes from './routes/analysis.js';
+import dashboardRoutes from './routes/dashboard.js';
 import Setting from './models/Setting.js';
 
 // Load env vars
@@ -33,9 +32,8 @@ const startServer = async () => {
     app.use('/api/reports', reportsRoutes);
     app.use('/api/users', userRoutes);
     app.use('/api/predict', predictRoutes);
-    app.use('/api/models', modelRoutes);
     app.use('/api/data', dataRoutes);
-    app.use('/api/analysis', analysisRoutes);
+    app.use('/api/dashboard', dashboardRoutes);
 
     app.listen(port, () => {
       console.log(`Backend server running at http://localhost:${port}`);

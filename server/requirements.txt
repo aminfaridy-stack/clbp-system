@@ -3,7 +3,3 @@ pandas
 numpy
 pymongo
 joblib
-scipy
-matplotlib
-reportlab
-openpyxl

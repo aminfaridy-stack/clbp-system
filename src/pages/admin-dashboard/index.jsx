@@ -17,14 +17,13 @@ import ModelPerformanceMonitoring from './components/ModelPerformanceMonitoring'
 import AdminToolbar from './components/AdminToolbar';
 import AdvancedFilters from './components/AdvancedFilters';
 import SettingsPanel from './components/SettingsPanel';
-import ModelManager from './components/ModelManager';
-import QuestionnaireManager from './components/QuestionnaireManager';
-import AnalysisManager from "./components/AnalysisManager";
   const currentLanguage = useLanguage();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeView, setActiveView] = useState('overview');
   const [filteredPatients, setFilteredPatients] = useState([]);
+  const [metrics, setMetrics] = useState(null);
+  const [recentPatients, setRecentPatients] = useState([]);
   const [filters, setFilters] = useState({
     riskLevel: 'all',
     assessmentStatus: 'all',
@@ -44,75 +43,28 @@ import AnalysisManager from "./components/AnalysisManager";
   }, [dispatch, activeView]);
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => setIsLoading(false), 1200);
-  }, []);
-
-  // Mock admin dashboard data
-  const dashboardData = {
-    metrics: {
-      totalPatients: 1247,
-      completionRate: 85.3,
-      riskDistribution: {
-        low: 45.2,
-        moderate: 38.7,
-        high: 16.1
-      },
-      modelAccuracy: 94.7
-    },
-    patients: [
-      {
-        id: 'P001',
-        name: currentLanguage === 'fa' ? 'علی احمدی' : 'Ali Ahmadi',
-        phase: 'T2',
-        riskScore: 72,
-        lastActivity: '2025-01-04',
-        status: 'active',
-        age: 35,
-        gender: currentLanguage === 'fa' ? 'مرد' : 'Male'
-      },
-      {
-        id: 'P002',
-        name: currentLanguage === 'fa' ? 'مریم حسینی' : 'Maryam Hosseini',
-        phase: 'T1',
-        riskScore: 45,
-        lastActivity: '2025-01-05',
-        status: 'completed',
-        age: 42,
-        gender: currentLanguage === 'fa' ? 'زن' : 'Female'
-      },
-      {
-        id: 'P003',
-        name: currentLanguage === 'fa' ? 'محمد رضایی' : 'Mohammad Rezaei',
-        phase: 'T3',
-        riskScore: 88,
-        lastActivity: '2025-01-03',
-        status: 'pending',
-        age: 28,
-        gender: currentLanguage === 'fa' ? 'مرد' : 'Male'
-      },
-      {
-        id: 'P004',
-        name: currentLanguage === 'fa' ? 'زهرا موسوی' : 'Zahra Mousavi',
-        phase: 'T2',
-        riskScore: 61,
-        lastActivity: '2025-01-05',
-        status: 'active',
-        age: 38,
-        gender: currentLanguage === 'fa' ? 'زن' : 'Female'
-      },
-      {
-        id: 'P005',
-        name: currentLanguage === 'fa' ? 'حسن کریمی' : 'Hassan Karimi',
-        phase: 'T1',
-        riskScore: 29,
-        lastActivity: '2025-01-04',
-        status: 'completed',
-        age: 45,
-        gender: currentLanguage === 'fa' ? 'مرد' : 'Male'
+    const fetchDashboardData = async () => {
+      setIsLoading(true);
+      try {
+        const metricsRes = await axios.get('/api/dashboard/metrics');
+        const recentPatientsRes = await axios.get('/api/dashboard/recent-patients');
+        setMetrics(metricsRes.data);
+        setRecentPatients(recentPatientsRes.data);
+      } catch (error) {
+        addToast('Failed to load dashboard data.', 'error');
+      } finally {
+        setIsLoading(false);
       }
-    ]
-  };
+    };
+
+    if (activeView === 'overview') {
+      fetchDashboardData();
+    } else {
+      // If not on the overview tab, we might not need to load this,
+      // but for simplicity we'll just ensure loading is false.
+      setIsLoading(false);
+    }
+  }, [activeView, addToast]);
 
   const viewTabs = [
     {
@@ -139,21 +91,6 @@ import AnalysisManager from "./components/AnalysisManager";
       id: 'settings',
       name: currentLanguage === 'fa' ? 'تنظیمات' : 'Settings',
       icon: 'Settings'
-    },
-    {
-      id: 'questionnaires',
-      name: currentLanguage === 'fa' ? 'پرسشنامه‌ها' : 'Questionnaires',
-      icon: 'FileText'
-    },
-    {
-      id: 'models',
-      name: currentLanguage === 'fa' ? 'مدل‌ها' : 'Models',
-      icon: 'BrainCircuit'
-    },
-    {
-      id: 'analysis',
-      name: currentLanguage === 'fa' ? 'تحلیل آماری' : 'Statistical Analysis',
-      icon: 'Pipette'
     }
   ];
 
@@ -163,13 +100,14 @@ import AnalysisManager from "./components/AnalysisManager";
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    // Filter patients based on new filters
-    const filtered = dashboardData?.patients?.filter(patient => {
-      if (newFilters?.riskLevel !== 'all') {
-        const risk = patient?.riskScore < 40 ? 'low' : patient?.riskScore < 70 ? 'moderate' : 'high';
-        if (risk !== newFilters?.riskLevel) return false;
+    const sourceData = activeView === 'overview' ? recentPatients : users;
+    const filtered = sourceData.filter(patient => {
+      // Note: riskScore is a placeholder and not in the User model yet
+      if (newFilters?.riskLevel !== 'all' && patient.riskScore) {
+        const risk = patient.riskScore < 40 ? 'low' : patient.riskScore < 70 ? 'moderate' : 'high';
+        if (risk !== newFilters.riskLevel) return false;
       }
-      if (newFilters?.assessmentStatus !== 'all' && patient?.status !== newFilters?.assessmentStatus) {
+      if (newFilters?.assessmentStatus !== 'all' && patient.status !== newFilters.assessmentStatus) {
         return false;
       }
       return true;
@@ -283,7 +221,7 @@ import AnalysisManager from "./components/AnalysisManager";
                 <div className="space-y-8">
                   {/* Performance Metrics */}
                   <PerformanceMetricsCards 
-                    metrics={dashboardData?.metrics}
+                    metrics={metrics}
                     currentLanguage={currentLanguage}
                   />
 
@@ -291,7 +229,7 @@ import AnalysisManager from "./components/AnalysisManager";
                   <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                     <div className="xl:col-span-2">
                       <PatientOverviewTable 
-                        patients={dashboardData?.patients?.slice(0, 5)}
+                        patients={recentPatients}
                         onPatientClick={handlePatientClick}
                         currentLanguage={currentLanguage}
                         compact={true}
@@ -299,7 +237,7 @@ import AnalysisManager from "./components/AnalysisManager";
                     </div>
                     <div>
                       <DataVisualizationPanels 
-                        data={dashboardData?.metrics}
+                        data={metrics}
                         currentLanguage={currentLanguage}
                         compact={true}
                       />
@@ -335,29 +273,20 @@ import AnalysisManager from "./components/AnalysisManager";
 
               {activeView === 'analytics' && (
                 <DataVisualizationPanels 
-                  data={dashboardData?.metrics}
+                  data={metrics}
                   currentLanguage={currentLanguage}
                 />
               )}
 
               {activeView === 'monitoring' && (
                 <ModelPerformanceMonitoring 
-                  performance={dashboardData?.metrics}
+                  performance={metrics}
                   currentLanguage={currentLanguage}
                 />
               )}
 
               {activeView === 'settings' && (
                 <SettingsPanel currentLanguage={currentLanguage} />
-              )}
-              {activeView === 'questionnaires' && (
-                <QuestionnaireManager currentLanguage={currentLanguage} />
-              )}
-              {activeView === 'models' && (
-                <ModelManager currentLanguage={currentLanguage} />
-              )}
-              {activeView === 'analysis' && (
-                <AnalysisManager currentLanguage={currentLanguage} />
               )}
             </div>
 

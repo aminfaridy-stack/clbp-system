@@ -142,14 +142,11 @@ const PatientOverviewTable = ({ patients = [], onPatientClick, currentLanguage, 
               <SortableHeader field="name">
                 {currentLanguage === 'fa' ? 'نام بیمار' : 'Patient Name'}
               </SortableHeader>
-              <SortableHeader field="phase">
-                {currentLanguage === 'fa' ? 'مرحله' : 'Phase'}
+              <SortableHeader field="email">
+                {currentLanguage === 'fa' ? 'ایمیل' : 'Email'}
               </SortableHeader>
-              <SortableHeader field="riskScore">
-                {currentLanguage === 'fa' ? 'امتیاز ریسک' : 'Risk Score'}
-              </SortableHeader>
-              <SortableHeader field="lastActivity">
-                {currentLanguage === 'fa' ? 'آخرین فعالیت' : 'Last Activity'}
+              <SortableHeader field="createdAt">
+                {currentLanguage === 'fa' ? 'تاریخ ثبت‌نام' : 'Registration Date'}
               </SortableHeader>
               <SortableHeader field="status">
                 {currentLanguage === 'fa' ? 'وضعیت' : 'Status'}
@@ -173,31 +170,19 @@ const PatientOverviewTable = ({ patients = [], onPatientClick, currentLanguage, 
                     </div>
                     <div className="ml-4 rtl:mr-4 rtl:ml-0">
                       <div className="text-sm font-medium text-foreground">
-                        {patient?.name}
+                        {`${patient?.firstName} ${patient?.lastName}`}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        ID: {patient?.id}
+                        ID: {patient?._id}
                       </div>
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                    {patient?.phase}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                    <span className="text-sm font-medium text-foreground font-data">
-                      {patient?.riskScore}%
-                    </span>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRiskBadge(patient?.riskScore)?.className}`}>
-                      {getRiskBadge(patient?.riskScore)?.text}
-                    </span>
-                  </div>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                  {patient?.email}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                  {patient?.lastActivity}
+                  {new Date(patient?.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(patient?.status)?.className}`}>
