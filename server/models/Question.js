@@ -9,7 +9,7 @@ const questionSchema = new mongoose.Schema({
   questionType: {
     type: String,
     required: true,
-    enum: ['text', 'multiple-choice', 'checkboxes', 'dropdown'],
+    enum: ['text', 'paragraph', 'multiple-choice', 'checkboxes', 'dropdown', 'date', 'datetime', 'linear-scale'],
     default: 'text',
   },
   options: {
@@ -18,6 +18,35 @@ const questionSchema = new mongoose.Schema({
     required: function() {
       return ['multiple-choice', 'checkboxes', 'dropdown'].includes(this.questionType);
     },
+  },
+  isRequired: {
+    type: Boolean,
+    default: false,
+  },
+  // Add min and max for linear scale
+  minScale: {
+    type: Number,
+    required: function() {
+      return this.questionType === 'linear-scale';
+    },
+    default: 1,
+  },
+  maxScale: {
+    type: Number,
+    required: function() {
+      return this.questionType === 'linear-scale';
+    },
+    default: 5,
+  },
+  minLabel: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  maxLabel: {
+    type: String,
+    trim: true,
+    default: '',
   },
 }, { timestamps: true });
 

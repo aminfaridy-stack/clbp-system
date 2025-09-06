@@ -56,7 +56,7 @@ router.post('/', async (req, res) => {
 // @route   PUT /api/questionnaires/:id
 // @access  Private/Admin
 router.put('/:id', async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, questions } = req.body;
 
   try {
     const questionnaire = await Questionnaire.findById(req.params.id);
@@ -64,6 +64,9 @@ router.put('/:id', async (req, res) => {
     if (questionnaire) {
       questionnaire.title = title || questionnaire.title;
       questionnaire.description = description || questionnaire.description;
+      if (questions) {
+        questionnaire.questions = questions;
+      }
 
       const updatedQuestionnaire = await questionnaire.save();
       res.json(updatedQuestionnaire);
@@ -101,7 +104,7 @@ router.delete('/:id', async (req, res) => {
 // @route   POST /api/questionnaires/:id/questions
 // @access  Private/Admin
 router.post('/:id/questions', async (req, res) => {
-  const { text, questionType, options } = req.body;
+  const { text, questionType, options, isRequired, minScale, maxScale, minLabel, maxLabel } = req.body;
 
   try {
     const questionnaire = await Questionnaire.findById(req.params.id);
@@ -111,6 +114,11 @@ router.post('/:id/questions', async (req, res) => {
         text,
         questionType,
         options,
+        isRequired,
+        minScale,
+        maxScale,
+        minLabel,
+        maxLabel
       });
 
       const createdQuestion = await question.save();
@@ -130,15 +138,20 @@ router.post('/:id/questions', async (req, res) => {
 // @route   PUT /api/questionnaires/:id/questions/:questionId
 // @access  Private/Admin
 router.put('/:id/questions/:questionId', async (req, res) => {
-  const { text, questionType, options } = req.body;
+  const { text, questionType, options, isRequired, minScale, maxScale, minLabel, maxLabel } = req.body;
 
   try {
     const question = await Question.findById(req.params.questionId);
 
     if (question) {
-      question.text = text || question.text;
-      question.questionType = questionType || question.questionType;
-      question.options = options || question.options;
+      if (text !== undefined) question.text = text;
+      if (questionType !== undefined) question.questionType = questionType;
+      if (options !== undefined) question.options = options;
+      if (isRequired !== undefined) question.isRequired = isRequired;
+      if (minScale !== undefined) question.minScale = minScale;
+      if (maxScale !== undefined) question.maxScale = maxScale;
+      if (minLabel !== undefined) question.minLabel = minLabel;
+      if (maxLabel !== undefined) question.maxLabel = maxLabel;
 
       const updatedQuestion = await question.save();
       res.json(updatedQuestion);

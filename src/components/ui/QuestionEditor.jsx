@@ -3,22 +3,38 @@ import Button from './Button';
 import Input from './Input';
 import Select from './Select';
 import Icon from '../AppIcon';
+import Checkbox from './Checkbox';
 
 const QuestionEditor = ({ isOpen, onClose, onSave, question, questionnaireId, currentLanguage }) => {
   const [text, setText] = useState('');
   const [questionType, setQuestionType] = useState('text');
   const [options, setOptions] = useState(['']);
+  const [isRequired, setIsRequired] = useState(false);
+  const [minScale, setMinScale] = useState(1);
+  const [maxScale, setMaxScale] = useState(5);
+  const [minLabel, setMinLabel] = useState('');
+  const [maxLabel, setMaxLabel] = useState('');
 
   useEffect(() => {
     if (question) {
       setText(question.text || '');
       setQuestionType(question.questionType || 'text');
       setOptions(question.options && question.options.length > 0 ? question.options : ['']);
+      setIsRequired(question.isRequired || false);
+      setMinScale(question.minScale || 1);
+      setMaxScale(question.maxScale || 5);
+      setMinLabel(question.minLabel || '');
+      setMaxLabel(question.maxLabel || '');
     } else {
       // Reset form for new question
       setText('');
       setQuestionType('text');
       setOptions(['']);
+      setIsRequired(false);
+      setMinScale(1);
+      setMaxScale(5);
+      setMinLabel('');
+      setMaxLabel('');
     }
   }, [question, isOpen]);
 
@@ -42,7 +58,12 @@ const QuestionEditor = ({ isOpen, onClose, onSave, question, questionnaireId, cu
     const questionData = {
       text,
       questionType,
+      isRequired,
       options: ['multiple-choice', 'checkboxes', 'dropdown'].includes(questionType) ? options.filter(opt => opt.trim() !== '') : [],
+      minScale: questionType === 'linear-scale' ? minScale : undefined,
+      maxScale: questionType === 'linear-scale' ? maxScale : undefined,
+      minLabel: questionType === 'linear-scale' ? minLabel : undefined,
+      maxLabel: questionType === 'linear-scale' ? maxLabel : undefined,
     };
     onSave(questionData);
   };
@@ -51,9 +72,13 @@ const QuestionEditor = ({ isOpen, onClose, onSave, question, questionnaireId, cu
 
   const questionTypeOptions = [
     { value: 'text', label: currentLanguage === 'fa' ? 'متن کوتاه' : 'Short Text' },
+    { value: 'paragraph', label: currentLanguage === 'fa' ? 'پاراگراف' : 'Paragraph' },
     { value: 'multiple-choice', label: currentLanguage === 'fa' ? 'چند گزینه‌ای' : 'Multiple Choice' },
     { value: 'checkboxes', label: currentLanguage === 'fa' ? 'چک‌باکس' : 'Checkboxes' },
     { value: 'dropdown', label: currentLanguage === 'fa' ? 'لیست کشویی' : 'Dropdown' },
+    { value: 'date', label: currentLanguage === 'fa' ? 'تاریخ' : 'Date' },
+    { value: 'datetime', label: currentLanguage === 'fa' ? 'تاریخ و زمان' : 'Date & Time' },
+    { value: 'linear-scale', label: currentLanguage === 'fa' ? 'مقیاس خطی' : 'Linear Scale' },
   ];
 
   return (
@@ -102,15 +127,72 @@ const QuestionEditor = ({ isOpen, onClose, onSave, question, questionnaireId, cu
               </Button>
             </div>
           )}
+
+          {questionType === 'linear-scale' && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-foreground">{currentLanguage === 'fa' ? 'تنظیمات مقیاس' : 'Scale Settings'}</label>
+              <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                <Input
+                  label={currentLanguage === 'fa' ? 'از' : 'From'}
+                  type="number"
+                  value={minScale}
+                  onChange={(e) => setMinScale(parseInt(e.target.value, 10))}
+                  className="w-24"
+                />
+                <Input
+                  label={currentLanguage === 'fa' ? 'تا' : 'To'}
+                  type="number"
+                  value={maxScale}
+                  onChange={(e) => setMaxScale(parseInt(e.target.value, 10))}
+                  className="w-24"
+                />
+              </div>
+               <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                <Input
+                  label={currentLanguage === 'fa' ? 'برچسب حداقل' : 'Min Label'}
+                  value={minLabel}
+                  onChange={(e) => setMinLabel(e.target.value)}
+                  placeholder={currentLanguage === 'fa' ? '(اختیاری)' : '(Optional)'}
+                />
+                <Input
+                  label={currentLanguage === 'fa' ? 'برچسب حداکثر' : 'Max Label'}
+                  value={maxLabel}
+                  onChange={(e) => setMaxLabel(e.target.value)}
+                  placeholder={currentLanguage === 'fa' ? '(اختیاری)' : '(Optional)'}
+                />
+              </div>
+            </div>
+          )}
+
+          {questionType === 'date' && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-foreground">{currentLanguage === 'fa' ? 'ورودی تاریخ' : 'Date Input'}</label>
+              <Input type="date" className="w-full" />
+            </div>
+          )}
+
+          {questionType === 'datetime' && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-foreground">{currentLanguage === 'fa' ? 'ورودی تاریخ و زمان' : 'Date & Time Input'}</label>
+              <Input type="datetime-local" className="w-full" />
+            </div>
+          )}
         </div>
 
-        <div className="p-6 border-t border-border mt-auto flex justify-end space-x-2 rtl:space-x-reverse">
-          <Button variant="outline" onClick={onClose}>
-            {currentLanguage === 'fa' ? 'انصراف' : 'Cancel'}
-          </Button>
-          <Button onClick={handleSave}>
-            {currentLanguage === 'fa' ? 'ذخیره سوال' : 'Save Question'}
-          </Button>
+        <div className="p-6 border-t border-border mt-auto flex justify-between items-center">
+          <Checkbox
+            label={currentLanguage === 'fa' ? 'الزامی' : 'Required'}
+            checked={isRequired}
+            onCheckedChange={setIsRequired}
+          />
+          <div className="space-x-2 rtl:space-x-reverse">
+            <Button variant="outline" onClick={onClose}>
+              {currentLanguage === 'fa' ? 'انصراف' : 'Cancel'}
+            </Button>
+            <Button onClick={handleSave}>
+              {currentLanguage === 'fa' ? 'ذخیره سوال' : 'Save Question'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

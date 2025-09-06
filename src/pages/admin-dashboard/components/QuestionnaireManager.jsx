@@ -137,6 +137,10 @@ const QuestionnaireManager = ({ currentLanguage }) => {
 };
 
 
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 // This is the refactored Editor view, now as a sub-component
 const QuestionnaireEditorView = ({ id, onBack, currentLanguage }) => {
   const [title, setTitle] = useState('');
@@ -146,6 +150,7 @@ const QuestionnaireEditorView = ({ id, onBack, currentLanguage }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [orderChanged, setOrderChanged] = useState(false);
 
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
@@ -162,6 +167,7 @@ const QuestionnaireEditorView = ({ id, onBack, currentLanguage }) => {
       setTitle(data.title);
       setDescription(data.description);
       setQuestions(data.questions);
+      setOrderChanged(false);
     } catch (err) {
       setError('Failed to fetch questionnaire data.');
     } finally {
@@ -178,7 +184,7 @@ const QuestionnaireEditorView = ({ id, onBack, currentLanguage }) => {
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
-  const handleSave = async () => {
+  const handleSaveDetails = async () => {
     setIsSaving(true);
     const payload = { title, description };
     try {
@@ -187,10 +193,25 @@ const QuestionnaireEditorView = ({ id, onBack, currentLanguage }) => {
         onBack();
       } else {
         await axios.put(`/api/questionnaires/${id}`, payload);
-        showSuccess(currentLanguage === 'fa' ? 'پرسشنامه با موفقیت ذخیره شد!' : 'Questionnaire saved successfully!');
+        showSuccess(currentLanguage === 'fa' ? 'جزئیات پرسشنامه ذخیره شد!' : 'Questionnaire details saved successfully!');
       }
     } catch (err) {
-      setError('Failed to save questionnaire.');
+      setError('Failed to save questionnaire details.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveOrder = async () => {
+    setIsSaving(true);
+    const questionIds = questions.map(q => q._id);
+    const payload = { questions: questionIds };
+    try {
+      await axios.put(`/api/questionnaires/${id}`, payload);
+      setOrderChanged(false);
+      showSuccess(currentLanguage === 'fa' ? 'ترتیب سوالات ذخیره شد!' : 'Question order saved successfully!');
+    } catch (err) {
+      setError('Failed to save question order.');
     } finally {
       setIsSaving(false);
     }
@@ -230,6 +251,26 @@ const QuestionnaireEditorView = ({ id, onBack, currentLanguage }) => {
     }
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event) => {
+    const {active, over} = event;
+
+    if (active.id !== over.id) {
+      setQuestions((items) => {
+        const oldIndex = items.findIndex(item => item._id === active.id);
+        const newIndex = items.findIndex(item => item._id === over.id);
+        setOrderChanged(true);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
   return (
     <div>
       <Button onClick={onBack} variant="ghost" iconName="ArrowLeft" iconPosition="left" className="mb-4">
@@ -244,8 +285,8 @@ const QuestionnaireEditorView = ({ id, onBack, currentLanguage }) => {
             </h3>
             <div className="flex items-center gap-2">
               {successMessage && <span className="text-sm text-success animate-fade-in">{successMessage}</span>}
-              <Button onClick={handleSave} loading={isSaving} iconName="Save" iconPosition="left">
-                {currentLanguage === 'fa' ? 'ذخیره' : 'Save'}
+              <Button onClick={handleSaveDetails} loading={isSaving} iconName="Save" iconPosition="left">
+                {currentLanguage === 'fa' ? 'ذخیره جزئیات' : 'Save Details'}
               </Button>
             </div>
           </div>
@@ -259,26 +300,27 @@ const QuestionnaireEditorView = ({ id, onBack, currentLanguage }) => {
           <div className="border border-border rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium text-foreground">{currentLanguage === 'fa' ? 'سوالات' : 'Questions'}</h3>
-              <Button onClick={() => { setEditingQuestion(null); setIsQuestionModalOpen(true); }} variant="outline" iconName="Plus" iconPosition="left">
-                {currentLanguage === 'fa' ? 'افزودن سوال' : 'Add Question'}
-              </Button>
+              <div className="flex items-center gap-2">
+                {orderChanged && (
+                   <Button onClick={handleSaveOrder} loading={isSaving} iconName="Save" iconPosition="left" size="sm">
+                    {currentLanguage === 'fa' ? 'ذخیره ترتیب' : 'Save Order'}
+                  </Button>
+                )}
+                <Button onClick={() => { setEditingQuestion(null); setIsQuestionModalOpen(true); }} variant="outline" iconName="Plus" iconPosition="left">
+                  {currentLanguage === 'fa' ? 'افزودن سوال' : 'Add Question'}
+                </Button>
+              </div>
             </div>
-            <div className="space-y-2">
-              {questions.map((q, index) => (
-                <div key={q._id} className="border border-border rounded-md p-3 flex items-center justify-between">
-                  <span>{index + 1}. {q.text}</span>
-                  <div className="flex items-center space-x-1 rtl:space-x-reverse">
-                    <Button variant="ghost" size="icon" onClick={() => { setEditingQuestion(q); setIsQuestionModalOpen(true); }}>
-                      <Icon name="FilePen" size={16} />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => openDeleteConfirm(q._id)}>
-                      <Icon name="Trash2" size={16} />
-                    </Button>
-                  </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={questions.map(q => q._id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {questions.map((q, index) => (
+                    <SortableQuestionItem key={q._id} id={q._id} question={q} index={index} onEdit={() => { setEditingQuestion(q); setIsQuestionModalOpen(true); }} onDelete={() => openDeleteConfirm(q._id)} />
+                  ))}
+                  {questions.length === 0 && <p className="text-muted-foreground text-center py-4">{currentLanguage === 'fa' ? 'هنوز سوالی اضافه نشده است.' : 'No questions have been added yet.'}</p>}
                 </div>
-              ))}
-              {questions.length === 0 && <p className="text-muted-foreground text-center py-4">{currentLanguage === 'fa' ? 'هنوز سوالی اضافه نشده است.' : 'No questions have been added yet.'}</p>}
-            </div>
+              </SortableContext>
+            </DndContext>
           </div>
         )}
       </div>
@@ -301,6 +343,53 @@ const QuestionnaireEditorView = ({ id, onBack, currentLanguage }) => {
       />
     </div>
   );
+};
+
+const SortableQuestionItem = ({ id, question, index, onEdit, onDelete }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({id: id});
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="border border-border rounded-md p-3 flex items-center justify-between bg-card touch-none">
+      <div className="flex items-center gap-3">
+        <Icon name="GripVertical" size={16} className="text-muted-foreground cursor-grab" />
+        <Icon name={getIconForQuestionType(question.questionType)} size={16} className="text-muted-foreground" />
+        <span>{index + 1}. {question.text}</span>
+      </div>
+      <div className="flex items-center space-x-1 rtl:space-x-reverse">
+        <Button variant="ghost" size="icon" onClick={onEdit}>
+          <Icon name="FilePen" size={16} />
+        </Button>
+        <Button variant="ghost" size="icon" className="text-destructive" onClick={onDelete}>
+          <Icon name="Trash2" size={16} />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+const getIconForQuestionType = (type) => {
+  switch (type) {
+    case 'text': return 'Type';
+    case 'paragraph': return 'AlignLeft';
+    case 'multiple-choice': return 'CircleDot';
+    case 'checkboxes': return 'CheckSquare';
+    case 'dropdown': return 'ChevronDownSquare';
+    case 'date': return 'Calendar';
+    case 'datetime': return 'Clock';
+    case 'linear-scale': return 'Minus';
+    default: return 'HelpCircle';
+  }
 };
 
 export default QuestionnaireManager;
