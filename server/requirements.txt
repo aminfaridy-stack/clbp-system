@@ -5,3 +5,5 @@ pymongo
 joblib
 scipy
 matplotlib
+reportlab
+openpyxl

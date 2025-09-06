@@ -11,6 +11,8 @@ const AnalysisManager = ({ currentLanguage }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResults, setAnalysisResults] = useState(null);
   const [error, setError] = useState(null);
+  const [exportFormat, setExportFormat] = useState('pdf');
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleFileChange = async (event) => {
     const selectedFile = event.target.files[0];
@@ -56,6 +58,37 @@ const AnalysisManager = ({ currentLanguage }) => {
     }
   };
 
+  const handleExport = async () => {
+    if (!filePath) {
+      setError('Cannot export without a data file.');
+      return;
+    }
+    setIsExporting(true);
+    setError(null);
+    try {
+      const response = await axios.post('/api/reports/export', {
+        filePath,
+        reportType: 'statistical_analysis',
+        format: exportFormat,
+      }, { responseType: 'blob' });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const filename = `statistical_report.${exportFormat}`;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+    } catch (err) {
+      setError('Failed to export report.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="mt-8">
       <h3 className="text-lg font-medium text-foreground mb-4">
@@ -80,9 +113,25 @@ const AnalysisManager = ({ currentLanguage }) => {
 
       {analysisResults && (
         <div className="mt-8 border border-border rounded-lg p-6">
-          <h4 className="text-md font-medium text-foreground mb-4">
-            {currentLanguage === 'fa' ? 'نتایج تحلیل' : 'Analysis Results'}
-          </h4>
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-md font-medium text-foreground">
+              {currentLanguage === 'fa' ? 'نتایج تحلیل' : 'Analysis Results'}
+            </h4>
+            <div className="flex items-center gap-2">
+              <Select
+                options={[
+                  { value: 'pdf', label: 'PDF' },
+                  { value: 'xlsx', label: 'Excel (XLSX)' },
+                  { value: 'csv', label: 'CSV' },
+                ]}
+                value={exportFormat}
+                onChange={(e) => setExportFormat(e.target.value)}
+              />
+              <Button onClick={handleExport} loading={isExporting} disabled={!analysisResults}>
+                {currentLanguage === 'fa' ? 'خروجی گرفتن' : 'Export'}
+              </Button>
+            </div>
+          </div>
           <pre className="bg-muted/50 p-4 rounded-md overflow-x-auto text-sm">
             {JSON.stringify(analysisResults, null, 2)}
           </pre>
