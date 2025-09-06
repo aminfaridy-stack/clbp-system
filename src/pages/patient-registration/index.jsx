@@ -305,12 +305,12 @@ const PatientRegistration = () => {
       // Show success message
       setShowSuccessMessage(true);
       
-      // Navigate to profile page after delay
+      // Navigate to login page after delay
       setTimeout(() => {
-        navigate('/patient-profile', {
+        navigate('/patient-login', {
           state: { 
-            message: currentLanguage === 'fa' ?'ثبت‌نام با موفقیت انجام شد. لطفاً اطلاعات پروفایل خود را تکمیل کنید.' :'Registration successful. Please complete your profile information.',
-            // In a real app, you would pass the new patient's ID here
+            message: currentLanguage === 'fa' ? 'ثبت‌نام با موفقیت انجام شد. لطفاً وارد شوید.' : 'Registration successful. Please log in.',
+            email: formData.email
           }
         });
       }, 3000);
