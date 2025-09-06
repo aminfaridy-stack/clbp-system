@@ -19,6 +19,7 @@ import AdvancedFilters from './components/AdvancedFilters';
 import SettingsPanel from './components/SettingsPanel';
 import ModelManager from './components/ModelManager';
 import QuestionnaireManager from './components/QuestionnaireManager';
+import AnalysisManager from "./components/AnalysisManager";
   const currentLanguage = useLanguage();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -148,6 +149,11 @@ import QuestionnaireManager from './components/QuestionnaireManager';
       id: 'models',
       name: currentLanguage === 'fa' ? 'مدل‌ها' : 'Models',
       icon: 'BrainCircuit'
+    },
+    {
+      id: 'analysis',
+      name: currentLanguage === 'fa' ? 'تحلیل آماری' : 'Statistical Analysis',
+      icon: 'Pipette'
     }
   ];
 
@@ -349,6 +355,9 @@ import QuestionnaireManager from './components/QuestionnaireManager';
               )}
               {activeView === 'models' && (
                 <ModelManager currentLanguage={currentLanguage} />
+              )}
+              {activeView === 'analysis' && (
+                <AnalysisManager currentLanguage={currentLanguage} />
               )}
             </div>
 
