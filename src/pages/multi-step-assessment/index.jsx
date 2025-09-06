@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { postAssessment } from '../../store/slices/predictionSlice';
+import { useToast } from '../../context/ToastContext';
 import Header from '../../components/ui/Header';
 
 import Button from '../../components/ui/Button';
@@ -11,6 +14,8 @@ import CompletionModal from './components/CompletionModal';
 
 const MultiStepAssessment = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { addToast } = useToast();
   const [currentLanguage, setCurrentLanguage] = useState('en');
   const [currentStep, setCurrentStep] = useState(1);
   const [responses, setResponses] = useState({});
@@ -214,9 +219,23 @@ const MultiStepAssessment = () => {
   };
 
   const handleCompleteAssessment = async () => {
-    await autoSave();
-    localStorage.removeItem('assessment_progress');
-    navigate('/assessment-results');
+    // No need to autoSave here as we are submitting
+    const assessmentData = { responses, selectedBodyRegions };
+
+    // Dispatch the thunk and unwrap the result
+    try {
+      await dispatch(postAssessment(assessmentData)).unwrap();
+      // unwrap will throw an error if the thunk is rejected
+
+      localStorage.removeItem('assessment_progress');
+      navigate('/assessment-results');
+    } catch (err) {
+      // The predictionSlice will hold the error state, but we can also alert the user
+      console.error('Failed to submit assessment:', err);
+      addToast(currentLanguage === 'fa' ? 'خطا در ارسال ارزیابی. لطفاً دوباره تلاش کنید.' : 'Failed to submit assessment. Please try again.', 'error');
+      // Close the modal so the user can see the page again
+      setShowCompletionModal(false);
+    }
   };
 
   const getCurrentQuestionnaire = () => {

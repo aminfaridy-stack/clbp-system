@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { useToast } from '../../../context/ToastContext';
 
 const PatientOverviewTable = ({ patients = [], onPatientClick, currentLanguage, compact = false }) => {
+  const { addToast } = useToast();
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -116,7 +118,7 @@ const PatientOverviewTable = ({ patients = [], onPatientClick, currentLanguage, 
                 size="sm"
                 iconName="Download"
                 iconPosition="left"
-                onClick={() => alert(currentLanguage === 'fa' ? 'صدور گزارش' : 'Export report')}
+                onClick={() => addToast('Export report is not implemented yet.')}
               >
                 {currentLanguage === 'fa' ? 'صدور' : 'Export'}
               </Button>
@@ -125,7 +127,7 @@ const PatientOverviewTable = ({ patients = [], onPatientClick, currentLanguage, 
                 size="sm"
                 iconName="Filter"
                 iconPosition="left"
-                onClick={() => alert(currentLanguage === 'fa' ? 'فیلترهای پیشرفته' : 'Advanced filters')}
+                onClick={() => addToast('Advanced filters is not implemented yet.')}
               >
                 {currentLanguage === 'fa' ? 'فیلتر' : 'Filter'}
               </Button>
@@ -217,7 +219,7 @@ const PatientOverviewTable = ({ patients = [], onPatientClick, currentLanguage, 
                     <button 
                       onClick={(e) => {
                         e?.stopPropagation();
-                        alert(currentLanguage === 'fa' ? 'ویرایش بیمار' : 'Edit patient');
+                        addToast('Edit patient is not implemented yet.');
                       }}
                       className="text-muted-foreground hover:text-foreground transition-clinical"
                       title={currentLanguage === 'fa' ? 'ویرایش' : 'Edit'}
@@ -227,7 +229,7 @@ const PatientOverviewTable = ({ patients = [], onPatientClick, currentLanguage, 
                     <button 
                       onClick={(e) => {
                         e?.stopPropagation();
-                        alert(currentLanguage === 'fa' ? 'ارسال یادآوری' : 'Send reminder');
+                        addToast('Send reminder is not implemented yet.');
                       }}
                       className="text-muted-foreground hover:text-foreground transition-clinical"
                       title={currentLanguage === 'fa' ? 'ارسال یادآوری' : 'Send Reminder'}

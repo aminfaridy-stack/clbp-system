@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
 import LanguageToggle from '../../components/ui/LanguageToggle';
+import { useToast } from '../../context/ToastContext';
 import PatientHeader from './components/PatientHeader';
 import AssessmentTimeline from './components/AssessmentTimeline';
 import TrendAnalysis from './components/TrendAnalysis';
@@ -16,6 +17,7 @@ const PatientProfile = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   useEffect(() => {
     // Check localStorage for saved language preference
@@ -82,15 +84,11 @@ const PatientProfile = () => {
   ];
 
   const handleSendReminder = () => {
-    // Mock reminder functionality
-    alert(currentLanguage === 'fa' ?'یادآوری ارسال شد' :'Reminder sent successfully'
-    );
+    addToast(currentLanguage === 'fa' ? 'یادآوری ارسال شد' : 'Reminder sent successfully', 'success');
   };
 
   const handleGenerateReport = () => {
-    // Mock report generation
-    alert(currentLanguage === 'fa' ?'گزارش در حال تولید است...' :'Generating report...'
-    );
+    addToast(currentLanguage === 'fa' ? 'گزارش در حال تولید است...' : 'Generating report...');
   };
 
   const handleEditPatient = () => {

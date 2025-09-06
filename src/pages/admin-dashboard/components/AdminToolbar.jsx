@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import Button from '../../../components/ui/Button';
 import Icon from '../../../components/AppIcon';
+import { useToast } from '../../../context/ToastContext';
 
 const AdminToolbar = ({ onExport, currentLanguage }) => {
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const { addToast } = useToast();
+
+  const handlePlaceholderClick = (featureName) => {
+    addToast(`${featureName} ${currentLanguage === 'fa' ? 'هنوز پیاده‌سازی نشده است.' : 'is not implemented yet.'}`);
+  };
 
   const exportFormats = [
     { 
@@ -84,7 +90,7 @@ const AdminToolbar = ({ onExport, currentLanguage }) => {
       <Button
         variant="outline"
         size="sm"
-        onClick={() => alert(currentLanguage === 'fa' ? 'دسترسی به لاگ‌های تفصیلی' : 'Accessing audit logs')}
+        onClick={() => handlePlaceholderClick(currentLanguage === 'fa' ? 'لاگ‌ها' : 'Audit Logs')}
         iconName="FileText"
         iconPosition="left"
       >
@@ -94,7 +100,7 @@ const AdminToolbar = ({ onExport, currentLanguage }) => {
       <Button
         variant="outline"
         size="sm"
-        onClick={() => alert(currentLanguage === 'fa' ? 'مدیریت کاربران' : 'User management')}
+        onClick={() => handlePlaceholderClick(currentLanguage === 'fa' ? 'کاربران' : 'Users')}
         iconName="Users"
         iconPosition="left"
       >
@@ -104,7 +110,7 @@ const AdminToolbar = ({ onExport, currentLanguage }) => {
       <Button
         variant="outline"
         size="sm"
-        onClick={() => alert(currentLanguage === 'fa' ? 'تنظیمات سیستم' : 'System configuration')}
+        onClick={() => handlePlaceholderClick(currentLanguage === 'fa' ? 'تنظیمات' : 'Settings')}
         iconName="Settings"
         iconPosition="left"
       >

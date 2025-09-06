@@ -12,22 +12,37 @@ const Header = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for user session to determine if logged in
-    const userSession = localStorage.getItem('userSession');
-    if (userSession) {
-      try {
-        setSession(JSON.parse(userSession));
-      } catch (error) {
-        localStorage.removeItem('userSession');
+    const checkSession = () => {
+      const userSession = localStorage.getItem('userSession');
+      if (userSession) {
+        try {
+          setSession(JSON.parse(userSession));
+        } catch (error) {
+          localStorage.removeItem('userSession');
+          setSession(null);
+        }
+      } else {
+        setSession(null);
       }
-    }
-  }, [location.pathname]); // Re-check on path change
+    };
+    checkSession();
+    // Also listen for a custom event that might be dispatched on login/logout
+    window.addEventListener('sessionChanged', checkSession);
+    return () => window.removeEventListener('sessionChanged', checkSession);
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('userSession');
+    setSession(null);
+    window.dispatchEvent(new Event('sessionChanged')); // Inform other components
+    navigate('/patient-login');
+  };
 
   // --- Define Navigation Items based on context ---
-  const getNavItems = () => {
-    const professionalRoutes = ['/admin-dashboard', '/patient-profile'];
-    const patientLoggedInRoutes = ['/multi-step-assessment', '/assessment-results'];
+  const professionalRoutes = ['/admin-dashboard', '/patient-profile'];
+  const patientLoggedInRoutes = ['/multi-step-assessment', '/assessment-results'];
 
+  const getNavItems = () => {
     // Professional/Admin View
     if (professionalRoutes.includes(location.pathname)) {
       return [
@@ -109,6 +124,19 @@ const Header = () => {
                 iconPosition="left"
               >
                 {currentLanguage === 'fa' ? 'پورتال بیمار' : 'Patient Portal'}
+              </Button>
+            )}
+
+            {/* Logout Button for logged-in users */}
+            {session && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                iconName="LogOut"
+                iconPosition="left"
+              >
+                {currentLanguage === 'fa' ? 'خروج' : 'Logout'}
               </Button>
             )}
 

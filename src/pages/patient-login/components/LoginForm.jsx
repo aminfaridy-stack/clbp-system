@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { useToast } from '../../../context/ToastContext';
 import Input from '../../../components/ui/Input';
 import { Checkbox } from '../../../components/ui/Checkbox';
 
@@ -16,6 +17,7 @@ const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') || 'en';
@@ -112,6 +114,9 @@ const LoginForm = () => {
         rememberMe: formData?.rememberMe
       }));
 
+      // Dispatch event for header to update
+      window.dispatchEvent(new Event('sessionChanged'));
+
       // Navigate to assessment
       navigate('/multi-step-assessment');
 
@@ -125,7 +130,9 @@ const LoginForm = () => {
   };
 
   const handleForgotPassword = () => {
-    alert(currentLanguage === 'fa' ?'لینک بازیابی رمز عبور به ایمیل شما ارسال خواهد شد' :'Password recovery link will be sent to your email'
+    addToast(
+      currentLanguage === 'fa' ?'لینک بازیابی رمز عبور به ایمیل شما ارسال خواهد شد' :'Password recovery link will be sent to your email',
+      'success'
     );
   };
 

@@ -208,7 +208,7 @@ const QuestionnaireEditorView = ({ id, onBack, currentLanguage }) => {
       fetchQuestionnaire();
       showSuccess(currentLanguage === 'fa' ? 'سوال ذخیره شد.' : 'Question saved.');
     } catch (err) {
-      alert('Failed to save question.');
+      setError('Failed to save question.');
     }
   };
 
@@ -223,7 +223,7 @@ const QuestionnaireEditorView = ({ id, onBack, currentLanguage }) => {
       await axios.delete(`/api/questionnaires/${id}/questions/${itemToDelete}`);
       fetchQuestionnaire();
     } catch (err) {
-      alert('Failed to delete question.');
+      setError('Failed to delete question.');
     } finally {
       setIsConfirmModalOpen(false);
       setItemToDelete(null);

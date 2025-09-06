@@ -4,8 +4,10 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Icon from '../../../components/AppIcon';
 import QuestionnaireManager from './QuestionnaireManager';
+import { useToast } from '../../../context/ToastContext';
 
 const SettingsPanel = ({ currentLanguage }) => {
+  const { addToast } = useToast();
   const [settings, setSettings] = useState({
     appName: '',
     emergencyContact: { name: '', phone: '' },
@@ -55,9 +57,10 @@ const SettingsPanel = ({ currentLanguage }) => {
       // Save emergencyContact
       await axios.put('/api/settings/emergencyContact', { value: settings.emergencyContact });
 
-      alert(currentLanguage === 'fa' ? 'تنظیمات با موفقیت ذخیره شد.' : 'Settings saved successfully.');
+      addToast(currentLanguage === 'fa' ? 'تنظیمات با موفقیت ذخیره شد.' : 'Settings saved successfully.', 'success');
     } catch (err) {
       setError('Failed to save settings.');
+      addToast(currentLanguage === 'fa' ? 'خطا در ذخیره تنظیمات.' : 'Failed to save settings.', 'error');
       console.error(err);
     } finally {
       setIsSaving(false);

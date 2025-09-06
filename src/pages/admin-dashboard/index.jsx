@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUsers } from '../../store/slices/userSlice';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
+import { useToast } from '../../context/ToastContext';
 import LanguageToggle from '../../components/ui/LanguageToggle';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
@@ -27,6 +30,16 @@ const AdminDashboard = () => {
     timeRange: '30days'
   });
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { addToast } = useToast();
+  const { list: users, status: userStatus, error: userError } = useSelector((state) => state.users);
+
+  useEffect(() => {
+    // Fetch users when the 'patients' view is active
+    if (activeView === 'patients') {
+      dispatch(fetchUsers());
+    }
+  }, [dispatch, activeView]);
 
   useEffect(() => {
     // Check localStorage for saved language preference
@@ -165,11 +178,8 @@ const AdminDashboard = () => {
   };
 
   const handleExportData = (format) => {
-    // Mock export functionality
-    alert(currentLanguage === 'fa' ? 
-      `داده‌ها در فرمت ${format} صادر شد` : 
-      `Data exported in ${format} format`
-    );
+    // This is a placeholder for a more specific export
+    addToast(`${format.toUpperCase()} export is not fully implemented yet.`);
   };
 
   const handleDownloadDetailedReport = async () => {
@@ -178,12 +188,10 @@ const AdminDashboard = () => {
         responseType: 'blob', // Important to handle the file download
       });
 
-      // Create a URL for the blob
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
 
-      // Extract filename from content-disposition header if available
       const contentDisposition = response.headers['content-disposition'];
       let filename = 'detailed_report.csv';
       if (contentDisposition) {
@@ -194,8 +202,6 @@ const AdminDashboard = () => {
       }
 
       link.setAttribute('download', filename);
-
-      // Append to html, click, and remove
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
@@ -203,7 +209,7 @@ const AdminDashboard = () => {
 
     } catch (error) {
       console.error('Error downloading report:', error);
-      alert(currentLanguage === 'fa' ? 'خطا در دانلود گزارش.' : 'Failed to download report.');
+      addToast(currentLanguage === 'fa' ? 'خطا در دانلود گزارش.' : 'Failed to download report.', 'error');
     }
   };
 
@@ -315,11 +321,15 @@ const AdminDashboard = () => {
                     currentLanguage={currentLanguage}
                   />
                   
-                  <PatientOverviewTable 
-                    patients={filteredPatients?.length > 0 ? filteredPatients : dashboardData?.patients}
-                    onPatientClick={handlePatientClick}
-                    currentLanguage={currentLanguage}
-                  />
+                  {userStatus === 'loading' && <p>Loading patients...</p>}
+                  {userError && <p className="text-destructive">Failed to load patients.</p>}
+                  {userStatus === 'succeeded' && (
+                    <PatientOverviewTable
+                      patients={filteredPatients?.length > 0 ? filteredPatients : users}
+                      onPatientClick={handlePatientClick}
+                      currentLanguage={currentLanguage}
+                    />
+                  )}
                 </div>
               )}
 
@@ -379,7 +389,7 @@ const AdminDashboard = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => alert(currentLanguage === 'fa' ? 'تنظیمات سیستم' : 'System configuration')}
+                    onClick={() => setActiveView('settings')}
                     iconName="Settings"
                     iconPosition="left"
                   >
