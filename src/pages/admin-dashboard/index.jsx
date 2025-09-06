@@ -17,8 +17,8 @@ import ModelPerformanceMonitoring from './components/ModelPerformanceMonitoring'
 import AdminToolbar from './components/AdminToolbar';
 import AdvancedFilters from './components/AdvancedFilters';
 import SettingsPanel from './components/SettingsPanel';
-
-const AdminDashboard = () => {
+import ModelManager from './components/ModelManager';
+import QuestionnaireManager from './components/QuestionnaireManager';
   const currentLanguage = useLanguage();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -138,6 +138,16 @@ const AdminDashboard = () => {
       id: 'settings',
       name: currentLanguage === 'fa' ? 'تنظیمات' : 'Settings',
       icon: 'Settings'
+    },
+    {
+      id: 'questionnaires',
+      name: currentLanguage === 'fa' ? 'پرسشنامه‌ها' : 'Questionnaires',
+      icon: 'FileText'
+    },
+    {
+      id: 'models',
+      name: currentLanguage === 'fa' ? 'مدل‌ها' : 'Models',
+      icon: 'BrainCircuit'
     }
   ];
 
@@ -333,6 +343,12 @@ const AdminDashboard = () => {
 
               {activeView === 'settings' && (
                 <SettingsPanel currentLanguage={currentLanguage} />
+              )}
+              {activeView === 'questionnaires' && (
+                <QuestionnaireManager currentLanguage={currentLanguage} />
+              )}
+              {activeView === 'models' && (
+                <ModelManager currentLanguage={currentLanguage} />
               )}
             </div>
 

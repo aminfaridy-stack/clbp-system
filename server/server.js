@@ -6,6 +6,7 @@ import settingsRoutes from './routes/settings.js';
 import reportsRoutes from './routes/reports.js';
 import userRoutes from './routes/users.js';
 import predictRoutes from './routes/predict.js';
+import modelRoutes from './routes/models.js';
 import dataRoutes from './routes/data.js';
 import Setting from './models/Setting.js';
 
@@ -31,6 +32,7 @@ const startServer = async () => {
     app.use('/api/reports', reportsRoutes);
     app.use('/api/users', userRoutes);
     app.use('/api/predict', predictRoutes);
+    app.use('/api/models', modelRoutes);
     app.use('/api/data', dataRoutes);
 
     app.listen(port, () => {
