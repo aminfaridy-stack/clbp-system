@@ -5,6 +5,7 @@ import Input from '../../../components/ui/Input';
 import Icon from '../../../components/AppIcon';
 import QuestionnaireManager from './QuestionnaireManager';
 import { useToast } from '../../../context/ToastContext';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 
 const SettingsPanel = ({ currentLanguage }) => {
   const { addToast } = useToast();
@@ -68,7 +69,7 @@ const SettingsPanel = ({ currentLanguage }) => {
   };
 
   if (isLoading) {
-    return <div>{currentLanguage === 'fa' ? 'در حال بارگذاری تنظیمات...' : 'Loading settings...'}</div>;
+    return <LoadingSpinner text={currentLanguage === 'fa' ? 'در حال بارگذاری تنظیمات...' : 'Loading settings...'} />;
   }
 
   if (error) {

@@ -1,21 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
+import { useLanguage } from '../../../components/ui/LanguageToggle';
 
 const AccessibilityInfo = () => {
-  const [currentLanguage, setCurrentLanguage] = useState('en');
+  const currentLanguage = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
-
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') || 'en';
-    setCurrentLanguage(savedLanguage);
-
-    const handleLanguageChange = (event) => {
-      setCurrentLanguage(event?.detail?.language);
-    };
-
-    window.addEventListener('languageChanged', handleLanguageChange);
-    return () => window.removeEventListener('languageChanged', handleLanguageChange);
-  }, []);
 
   const accessibilityFeatures = [
     {

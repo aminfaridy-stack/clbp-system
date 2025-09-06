@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { useLanguage } from '../../../components/ui/LanguageToggle';
 
 const TrendAnalysisChart = ({ 
   timePointData = [], 
@@ -9,21 +10,9 @@ const TrendAnalysisChart = ({
   onMetricToggle,
   className = '' 
 }) => {
-  const [currentLanguage, setCurrentLanguage] = useState('en');
+  const currentLanguage = useLanguage();
   const [chartType, setChartType] = useState('line');
   const [showPrediction, setShowPrediction] = useState(true);
-
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') || 'en';
-    setCurrentLanguage(savedLanguage);
-
-    const handleLanguageChange = (event) => {
-      setCurrentLanguage(event?.detail?.language);
-    };
-
-    window.addEventListener('languageChanged', handleLanguageChange);
-    return () => window.removeEventListener('languageChanged', handleLanguageChange);
-  }, []);
 
   // Mock trend data with predictions
   const mockTrendData = [

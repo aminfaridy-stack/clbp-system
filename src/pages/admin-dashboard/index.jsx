@@ -6,9 +6,10 @@ import axios from 'axios';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
 import { useToast } from '../../context/ToastContext';
-import LanguageToggle from '../../components/ui/LanguageToggle';
+import { useLanguage } from '../../components/ui/LanguageToggle';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import PerformanceMetricsCards from './components/PerformanceMetricsCards';
 import PatientOverviewTable from './components/PatientOverviewTable';
 import DataVisualizationPanels from './components/DataVisualizationPanels';
@@ -18,7 +19,7 @@ import AdvancedFilters from './components/AdvancedFilters';
 import SettingsPanel from './components/SettingsPanel';
 
 const AdminDashboard = () => {
-  const [currentLanguage, setCurrentLanguage] = useState('en');
+  const currentLanguage = useLanguage();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeView, setActiveView] = useState('overview');
@@ -42,25 +43,8 @@ const AdminDashboard = () => {
   }, [dispatch, activeView]);
 
   useEffect(() => {
-    // Check localStorage for saved language preference
-    const savedLanguage = localStorage.getItem('language') || 'en';
-    setCurrentLanguage(savedLanguage);
-    document.documentElement?.setAttribute('dir', savedLanguage === 'fa' ? 'rtl' : 'ltr');
-    document.documentElement?.setAttribute('lang', savedLanguage);
-
-    // Listen for language changes
-    const handleLanguageChange = (event) => {
-      setCurrentLanguage(event?.detail?.language);
-    };
-
-    window.addEventListener('languageChanged', handleLanguageChange);
-
     // Simulate loading
     setTimeout(() => setIsLoading(false), 1200);
-
-    return () => {
-      window.removeEventListener('languageChanged', handleLanguageChange);
-    };
   }, []);
 
   // Mock admin dashboard data
@@ -216,12 +200,7 @@ const AdminDashboard = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-muted-foreground">
-            {currentLanguage === 'fa' ? 'در حال بارگذاری داشبورد...' : 'Loading dashboard...'}
-          </p>
-        </div>
+        <LoadingSpinner text={currentLanguage === 'fa' ? 'در حال بارگذاری داشبورد...' : 'Loading dashboard...'} />
       </div>
     );
   }
@@ -321,8 +300,13 @@ const AdminDashboard = () => {
                     currentLanguage={currentLanguage}
                   />
                   
-                  {userStatus === 'loading' && <p>Loading patients...</p>}
-                  {userError && <p className="text-destructive">Failed to load patients.</p>}
+                  {userStatus === 'loading' && <LoadingSpinner text="Loading patients..." size="sm" />}
+                  {userError && (
+                    <div className="text-destructive text-center py-4">
+                      <p>{currentLanguage === 'fa' ? 'خطا در بارگذاری بیماران.' : 'Error loading patients.'}</p>
+                      <p className="text-xs">{userError.message || 'Unknown error'}</p>
+                    </div>
+                  )}
                   {userStatus === 'succeeded' && (
                     <PatientOverviewTable
                       patients={filteredPatients?.length > 0 ? filteredPatients : users}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
-import LanguageToggle from '../../components/ui/LanguageToggle';
+import { useLanguage } from '../../components/ui/LanguageToggle';
 import { useToast } from '../../context/ToastContext';
 import PatientHeader from './components/PatientHeader';
 import AssessmentTimeline from './components/AssessmentTimeline';
@@ -12,7 +12,7 @@ import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 
 const PatientProfile = () => {
-  const [currentLanguage, setCurrentLanguage] = useState('en');
+  const currentLanguage = useLanguage();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
@@ -20,25 +20,8 @@ const PatientProfile = () => {
   const { addToast } = useToast();
 
   useEffect(() => {
-    // Check localStorage for saved language preference
-    const savedLanguage = localStorage.getItem('language') || 'en';
-    setCurrentLanguage(savedLanguage);
-    document.documentElement?.setAttribute('dir', savedLanguage === 'fa' ? 'rtl' : 'ltr');
-    document.documentElement?.setAttribute('lang', savedLanguage);
-
-    // Listen for language changes
-    const handleLanguageChange = (event) => {
-      setCurrentLanguage(event?.detail?.language);
-    };
-
-    window.addEventListener('languageChanged', handleLanguageChange);
-
     // Simulate loading
     setTimeout(() => setIsLoading(false), 1000);
-
-    return () => {
-      window.removeEventListener('languageChanged', handleLanguageChange);
-    };
   }, []);
 
   // Mock patient data

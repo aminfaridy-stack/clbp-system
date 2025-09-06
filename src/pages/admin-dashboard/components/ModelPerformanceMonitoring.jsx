@@ -4,6 +4,7 @@ import { fetchChartData } from '../../../store/slices/chartSlice';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, AreaChart, Area, Tooltip, Legend } from 'recharts';
 import Icon from '../../../components/AppIcon';
 import Select from '../../../components/ui/Select';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 
 const ModelPerformanceMonitoring = ({ currentLanguage }) => {
   const dispatch = useDispatch();
@@ -49,8 +50,13 @@ const ModelPerformanceMonitoring = ({ currentLanguage }) => {
       </div>
 
       {/* Performance Overview Cards */}
-      {status === 'loading' && <p>Loading performance metrics...</p>}
-      {error && <p className="text-destructive">Failed to load performance metrics.</p>}
+      {status === 'loading' && <LoadingSpinner text="Loading performance data..." size="sm" />}
+      {error && (
+        <div className="text-destructive text-center py-4">
+          <p>{currentLanguage === 'fa' ? 'خطا در بارگذاری داده‌های عملکرد.' : 'Error loading performance data.'}</p>
+          <p className="text-xs">{error.message || 'Unknown error'}</p>
+        </div>
+      )}
       {status === 'succeeded' && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <div className="card-clinical p-6 border-l-4 border-l-green-500">

@@ -1,20 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Icon from '../../../components/AppIcon';
+import { useLanguage } from '../../../components/ui/LanguageToggle';
 
 const SecurityFeatures = () => {
-  const [currentLanguage, setCurrentLanguage] = useState('en');
-
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') || 'en';
-    setCurrentLanguage(savedLanguage);
-
-    const handleLanguageChange = (event) => {
-      setCurrentLanguage(event?.detail?.language);
-    };
-
-    window.addEventListener('languageChanged', handleLanguageChange);
-    return () => window.removeEventListener('languageChanged', handleLanguageChange);
-  }, []);
+  const currentLanguage = useLanguage();
 
   const securityFeatures = [
     {
