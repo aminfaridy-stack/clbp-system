@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
 import { useLanguage } from '../../components/ui/LanguageToggle';
@@ -15,33 +15,74 @@ const PatientProfile = () => {
   const currentLanguage = useLanguage();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [patientData, setPatientData] = useState(null);
+  const [assessments, setAssessments] = useState([]);
+  const [notes, setNotes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { patientId } = useParams();
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => setIsLoading(false), 1000);
-  }, []);
+    const fetchPatientData = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/users/${patientId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch patient data');
+        }
+        const data = await response.json();
+        setPatientData(data);
+      } catch (error) {
+        console.error('Error fetching patient data:', error);
+        addToast(
+          currentLanguage === 'fa'
+            ? 'خطا در واکشی اطلاعات بیمار'
+            : 'Error fetching patient data',
+          'error'
+        );
+        navigate('/admin-dashboard'); // Redirect if patient not found
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Mock patient data
-  const patientData = {
-    id: 'P001',
-    name: currentLanguage === 'fa' ? 'علی احمدی' : 'Ali Ahmadi',
-    age: 35,
-    gender: currentLanguage === 'fa' ? 'مرد' : 'Male',
-    phone: '+98 912 345 6789',
-    email: 'ali.ahmadi@email.com',
-    address: currentLanguage === 'fa' ?'تهران، خیابان ولیعصر، پلاک ۱۲۳' :'Tehran, Vali-e Asr Street, No. 123',
-    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-    status: 'active',
-    painLevel: 6,
-    chronicRisk: 65,
-    currentPhase: 'T1',
-    registrationDate: '2024-12-05',
-    lastAssessment: '2025-01-05',
-    nextAppointment: '2025-02-05'
-  };
+    if (patientId) {
+      fetchPatientData();
+    }
+  }, [patientId, navigate, addToast, currentLanguage]);
+
+  const fetchSubData = useCallback(async () => {
+    try {
+      const [assessmentsRes, notesRes] = await Promise.all([
+        fetch(`/api/assessments/patient/${patientId}`),
+        fetch(`/api/notes/patient/${patientId}`),
+      ]);
+
+      if (!assessmentsRes.ok) throw new Error('Failed to fetch assessments');
+      if (!notesRes.ok) throw new Error('Failed to fetch notes');
+
+      const assessmentsData = await assessmentsRes.json();
+      const notesData = await notesRes.json();
+
+      setAssessments(assessmentsData);
+      setNotes(notesData);
+    } catch (error) {
+      console.error('Error fetching sub-data:', error);
+      addToast(
+        currentLanguage === 'fa'
+          ? 'خطا در واکشی داده‌های تکمیلی'
+          : 'Error fetching supplementary data',
+        'error'
+      );
+    }
+  }, [patientId, addToast, currentLanguage]);
+
+  useEffect(() => {
+    if (patientId) {
+      fetchSubData();
+    }
+  }, [patientId, fetchSubData]);
 
   const tabs = [
     {
@@ -79,7 +120,7 @@ const PatientProfile = () => {
     console.log('Edit patient:', patientData?.id);
   };
 
-  if (isLoading) {
+  if (isLoading || !patientData) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
@@ -123,7 +164,7 @@ const PatientProfile = () => {
               </button>
               <Icon name="ChevronRight" size={14} className="rtl:rotate-180" />
               <span className="text-foreground font-medium">
-                {patientData?.name}
+                {patientData?.firstName ? `${patientData.firstName} ${patientData.lastName}` : ''}
               </span>
             </div>
 
@@ -161,7 +202,7 @@ const PatientProfile = () => {
               {activeTab === 'overview' && (
                 <div className="space-y-6">
                   <AssessmentTimeline 
-                    assessments={[]}
+                    assessments={assessments}
                     currentLanguage={currentLanguage}
                   />
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -176,7 +217,8 @@ const PatientProfile = () => {
                             {currentLanguage === 'fa' ? 'آخرین ارزیابی' : 'Last Assessment'}
                           </span>
                           <span className="text-sm font-medium text-foreground">
-                            {patientData?.lastAssessment}
+                            {/* To be implemented with assessment data */}
+                            N/A
                           </span>
                         </div>
                         <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
@@ -184,7 +226,8 @@ const PatientProfile = () => {
                             {currentLanguage === 'fa' ? 'قرار ملاقات بعدی' : 'Next Appointment'}
                           </span>
                           <span className="text-sm font-medium text-foreground">
-                            {patientData?.nextAppointment}
+                            {/* To be implemented */}
+                            N/A
                           </span>
                         </div>
                         <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
@@ -192,7 +235,7 @@ const PatientProfile = () => {
                             {currentLanguage === 'fa' ? 'تاریخ ثبت نام' : 'Registration Date'}
                           </span>
                           <span className="text-sm font-medium text-foreground">
-                            {patientData?.registrationDate}
+                            {new Date(patientData.createdAt).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
@@ -203,17 +246,22 @@ const PatientProfile = () => {
 
               {activeTab === 'assessments' && (
                 <AssessmentTimeline 
-                  assessments={[]}
+                  assessments={assessments}
                   currentLanguage={currentLanguage}
                 />
               )}
 
               {activeTab === 'trends' && (
-                <TrendAnalysis currentLanguage={currentLanguage} />
+                <TrendAnalysis assessments={assessments} currentLanguage={currentLanguage} />
               )}
 
               {activeTab === 'notes' && (
-                <ClinicalNotes currentLanguage={currentLanguage} />
+                <ClinicalNotes
+                  notes={notes}
+                  patientId={patientId}
+                  currentLanguage={currentLanguage}
+                  onNoteAdded={fetchSubData}
+                />
               )}
             </div>
 

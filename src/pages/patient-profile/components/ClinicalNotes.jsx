@@ -1,51 +1,14 @@
 import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { useToast } from '../../../context/ToastContext';
 
-
-const ClinicalNotes = ({ currentLanguage }) => {
+const ClinicalNotes = ({ notes, patientId, currentLanguage, onNoteAdded }) => {
   const [newNote, setNewNote] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('general');
   const [isAddingNote, setIsAddingNote] = useState(false);
-
-  const notes = [
-    {
-      id: 1,
-      date: '2025-01-05',
-      time: '14:30',
-      author: currentLanguage === 'fa' ? 'دکتر احمدی' : 'Dr. Ahmadi',
-      category: 'assessment',
-      title: currentLanguage === 'fa' ? 'ارزیابی T1 تکمیل شد' : 'T1 Assessment Completed',
-      content: currentLanguage === 'fa' 
-        ? `بیمار ارزیابی یک‌ماهه را با موفقیت تکمیل کرد. کاهش قابل توجه در نمرات درد (از ۸ به ۶) و بهبود عملکرد روزانه مشاهده شد.\n\nنکات مهم:\n- پاسخ مثبت به فیزیوتراپی\n- کاهش مصرف مسکن\n- بهبود کیفیت خواب`
-        : `Patient successfully completed one-month follow-up assessment. Significant reduction in pain scores (8 to 6) and improved daily functioning observed.\n\nKey points:\n- Positive response to physiotherapy\n- Reduced pain medication usage\n- Improved sleep quality`,
-      priority: 'normal'
-    },
-    {
-      id: 2,
-      date: '2024-12-20',
-      time: '10:15',
-      author: currentLanguage === 'fa' ? 'دکتر رضایی' : 'Dr. Rezaei',
-      category: 'treatment',
-      title: currentLanguage === 'fa' ? 'تغییر برنامه درمانی' : 'Treatment Plan Modification',
-      content: currentLanguage === 'fa'
-        ? `با توجه به پاسخ مثبت بیمار، برنامه فیزیوتراپی تشدید شد. جلسات از هفته‌ای ۲ بار به ۳ بار افزایش یافت.\n\nاهداف جدید:\n- تقویت عضلات مرکزی\n- بهبود انعطاف‌پذیری\n- آموزش ارگونومی`
-        : `Due to positive patient response, physiotherapy program intensified. Sessions increased from 2 to 3 times per week.\n\nNew goals:\n- Core muscle strengthening\n- Flexibility improvement\n- Ergonomics education`,
-      priority: 'high'
-    },
-    {
-      id: 3,
-      date: '2024-12-05',
-      time: '09:00',
-      author: currentLanguage === 'fa' ? 'دکتر احمدی' : 'Dr. Ahmadi',
-      category: 'initial',
-      title: currentLanguage === 'fa' ? 'ارزیابی اولیه' : 'Initial Assessment',
-      content: currentLanguage === 'fa'
-        ? `بیمار ۳۵ ساله با شکایت درد کمر از ۶ هفته پیش. درد در ناحیه L4-L5 با انتشار به پای چپ.\n\nیافته‌های کلیدی:\n- محدودیت حرکتی قابل توجه\n- نمره درد: ۸/۱۰\n- ریسک مزمن: ۷۵٪`
-        : `35-year-old patient presenting with 6-week history of lower back pain. Pain localized to L4-L5 region with left leg radiation.\n\nKey findings:\n- Significant movement limitation\n- Pain score: 8/10\n- Chronic risk: 75%`,
-      priority: 'normal'
-    }
-  ];
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { addToast } = useToast();
 
   const categories = [
     { id: 'general', name: currentLanguage === 'fa' ? 'عمومی' : 'General', icon: 'FileText', color: 'text-primary' },
@@ -54,33 +17,41 @@ const ClinicalNotes = ({ currentLanguage }) => {
     { id: 'followup', name: currentLanguage === 'fa' ? 'پیگیری' : 'Follow-up', icon: 'Calendar', color: 'text-secondary' }
   ];
 
-  const getPriorityIcon = (priority) => {
-    switch (priority) {
-      case 'high':
-        return { name: 'AlertTriangle', color: 'text-error' };
-      case 'medium':
-        return { name: 'AlertCircle', color: 'text-warning' };
-      default:
-        return { name: 'Info', color: 'text-primary' };
-    }
-  };
-
   const getCategoryConfig = (category) => {
     return categories?.find(cat => cat?.id === category) || categories?.[0];
   };
 
-  const handleAddNote = () => {
-    if (newNote?.trim()) {
-      // In a real app, this would make an API call
-      console.log('Adding note:', {
-        content: newNote,
-        category: selectedCategory,
-        date: new Date()?.toISOString()?.split('T')?.[0],
-        time: new Date()?.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+  const handleAddNote = async () => {
+    if (!newNote?.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId,
+          content: newNote,
+          category: selectedCategory,
+        }),
       });
-      
+
+      if (!response.ok) {
+        throw new Error('Failed to add note');
+      }
+
+      addToast(currentLanguage === 'fa' ? 'یادداشت با موفقیت اضافه شد' : 'Note added successfully', 'success');
       setNewNote('');
+      setSelectedCategory('general');
       setIsAddingNote(false);
+      if (onNoteAdded) {
+        onNoteAdded(); // Callback to refresh notes list
+      }
+    } catch (error) {
+      console.error('Error adding note:', error);
+      addToast(currentLanguage === 'fa' ? 'خطا در افزودن یادداشت' : 'Error adding note', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -175,80 +146,54 @@ const ClinicalNotes = ({ currentLanguage }) => {
       )}
       {/* Notes List */}
       <div className="space-y-4">
-        {notes?.map((note) => {
-          const categoryConfig = getCategoryConfig(note?.category);
-          const priorityIcon = getPriorityIcon(note?.priority);
-          
-          return (
-            <div key={note?.id} className="bg-background border border-border rounded-lg p-4 hover:shadow-clinical-md transition-clinical">
-              {/* Note Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                  <div className={`p-2 rounded-lg bg-muted/50 ${categoryConfig?.color}`}>
-                    <Icon name={categoryConfig?.icon} size={16} />
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium text-foreground">{note?.title}</h4>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse text-xs text-muted-foreground mt-1">
-                      <span>{note?.author}</span>
-                      <span>•</span>
-                      <span>{note?.date}</span>
-                      <span>•</span>
-                      <span>{note?.time}</span>
+        {notes && notes.length > 0 ? (
+          notes.map((note) => {
+            const categoryConfig = getCategoryConfig(note.category);
+
+            return (
+              <div key={note._id} className="bg-background border border-border rounded-lg p-4 hover:shadow-clinical-md transition-clinical">
+                {/* Note Header */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                    <div className={`p-2 rounded-lg bg-muted/50 ${categoryConfig.color}`}>
+                      <Icon name={categoryConfig.icon} size={16} />
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-medium text-foreground capitalize">{note.category}</h4>
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse text-xs text-muted-foreground mt-1">
+                        <span>{new Date(note.createdAt).toLocaleString()}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                  <Icon 
-                    name={priorityIcon?.name} 
-                    size={16} 
-                    className={priorityIcon?.color}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    iconName="MoreVertical"
-                    className="opacity-60 hover:opacity-100"
-                  />
-                </div>
-              </div>
-              {/* Note Content */}
-              <div className="text-sm text-foreground leading-relaxed whitespace-pre-line">
-                {note?.content}
-              </div>
-              {/* Note Footer */}
-              <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
-                <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                  <span className={`status-badge ${categoryConfig?.color?.replace('text-', 'text-')} bg-current/10`}>
-                    {categoryConfig?.name}
-                  </span>
-                </div>
-                
-                <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    iconName="Edit2"
-                    className="text-xs"
-                  >
-                    {currentLanguage === 'fa' ? 'ویرایش' : 'Edit'}
-                  </Button>
                   
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    iconName="Share"
-                    className="text-xs"
-                  >
-                    {currentLanguage === 'fa' ? 'اشتراک' : 'Share'}
-                  </Button>
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      iconName="MoreVertical"
+                      className="opacity-60 hover:opacity-100"
+                    />
+                  </div>
+                </div>
+                {/* Note Content */}
+                <div className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                  {note.content}
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        ) : (
+          <div className="text-center py-10">
+            <Icon name="FileText" size={48} className="mx-auto text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-semibold">
+              {currentLanguage === 'fa' ? 'هیچ یادداشتی یافت نشد' : 'No Notes Found'}
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {currentLanguage === 'fa' ? 'هنوز هیچ یادداشت بالینی برای این بیمار ثبت نشده است.' : 'No clinical notes have been added for this patient yet.'}
+            </p>
+          </div>
+        )}
       </div>
       {/* Load More */}
       <div className="flex justify-center mt-6">

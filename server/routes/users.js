@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
 // @route   POST /api/users
 // @access  Public
 router.post('/', async (req, res) => {
-  const { name, email, password } = req.body;
+  const { firstName, lastName, email, password } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
@@ -29,7 +29,8 @@ router.post('/', async (req, res) => {
     }
 
     const user = await User.create({
-      name,
+      firstName,
+      lastName,
       email,
       password,
     });
@@ -37,12 +38,29 @@ router.post('/', async (req, res) => {
     if (user) {
       res.status(201).json({
         _id: user._id,
-        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         role: user.role,
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+// @desc    Get user by ID
+// @route   GET /api/users/:id
+// @access  Private/Admin
+router.get('/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
