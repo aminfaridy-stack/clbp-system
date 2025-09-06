@@ -17,7 +17,7 @@ const QuestionnaireForm = ({
   isLastStep 
 }) => {
   const renderQuestion = (question, index) => {
-    const questionKey = `step_${currentStep}_q_${index}`;
+    const questionKey = question._id; // Use the unique ID from the database
     const currentResponse = responses?.[questionKey] || '';
 
     switch (question?.type) {

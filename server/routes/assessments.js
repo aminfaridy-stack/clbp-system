@@ -35,4 +35,37 @@ router.get('/patient/:patientId', async (req, res) => {
   }
 });
 
+// @desc    Create a new assessment
+// @route   POST /api/assessments
+// @access  Private
+router.post('/', async (req, res) => {
+  try {
+    const { patientId, questionnaireId, responses } = req.body;
+
+    if (!patientId || !questionnaireId || !responses) {
+      return res.status(400).json({ message: 'Patient ID, Questionnaire ID, and responses are required' });
+    }
+
+    // Convert responses object to the array format expected by the model
+    const responsesArray = Object.entries(responses).map(([questionId, answer]) => ({
+      questionId,
+      answer,
+    }));
+
+    const newAssessment = new Assessment({
+      patientId,
+      questionnaireId,
+      responses: responsesArray,
+      status: 'completed',
+      completedAt: new Date(),
+    });
+
+    const savedAssessment = await newAssessment.save();
+    res.status(201).json(savedAssessment);
+  } catch (error) {
+    console.error('Error creating assessment:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
 export default router;

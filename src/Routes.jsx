@@ -20,9 +20,9 @@ const Routes = () => {
         <Route path="/" element={<PatientLogin />} />
         <Route path="/patient-registration" element={<PatientRegistration />} />
         <Route path="/assessment-results" element={<AssessmentResults />} />
-        <Route path="/patient-profile" element={<PatientProfile />} />
+        <Route path="/patient-profile/:patientId" element={<PatientProfile />} />
         <Route path="/patient-login" element={<PatientLogin />} />
-        <Route path="/multi-step-assessment" element={<MultiStepAssessment />} />
+        <Route path="/multi-step-assessment/:questionnaireId" element={<MultiStepAssessment />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="*" element={<NotFound />} />
       </RouterRoutes>

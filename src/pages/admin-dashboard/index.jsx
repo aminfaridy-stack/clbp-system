@@ -95,7 +95,7 @@ import SettingsPanel from './components/SettingsPanel';
   ];
 
   const handlePatientClick = (patientId) => {
-    navigate(`/patient-profile?id=${patientId}`);
+    navigate(`/patient-profile/${patientId}`);
   };
 
   const handleFilterChange = (newFilters) => {

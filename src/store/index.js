@@ -4,6 +4,7 @@ import settingsReducer from './slices/settingsSlice';
 import userReducer from './slices/userSlice';
 import chartReducer from './slices/chartSlice';
 import predictionReducer from './slices/predictionSlice';
+import assessmentReducer from './slices/assessmentSlice';
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     users: userReducer,
     charts: chartReducer,
     prediction: predictionReducer,
+    assessment: assessmentReducer,
   },
   // Adding middleware is a good practice for things like logging
   // or handling async actions, but we can start simple.

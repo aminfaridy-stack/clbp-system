@@ -3,12 +3,12 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
-// @desc    Get all users
+// @desc    Get all patients
 // @route   GET /api/users
 // @access  Private/Admin
 router.get('/', async (req, res) => {
   try {
-    const users = await User.find({}).select('-password'); // Exclude passwords from result
+    const users = await User.find({ role: 'patient' }).select('-password'); // Exclude passwords from result
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
@@ -61,6 +61,31 @@ router.get('/:id', async (req, res) => {
       res.json(user);
     } else {
       res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+// @desc    Auth user & get token
+// @route   POST /api/users/login
+// @access  Public
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (user && (await user.matchPassword(password))) {
+      res.json({
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+      });
+    } else {
+      res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });

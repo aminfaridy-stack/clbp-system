@@ -31,19 +31,6 @@ const LoginForm = () => {
     return () => window.removeEventListener('languageChanged', handleLanguageChange);
   }, []);
 
-  const mockCredentials = {
-    patient: {
-      email: 'patient@clbp.com',
-      password: 'patient123',
-      name: currentLanguage === 'fa' ? 'علی احمدی' : 'Ali Ahmadi'
-    },
-    demo: {
-      email: 'demo@clbp.com', 
-      password: 'demo123',
-      name: currentLanguage === 'fa' ? 'کاربر نمونه' : 'Demo User'
-    }
-  };
-
   const validateForm = () => {
     const newErrors = {};
 
@@ -87,42 +74,45 @@ const LoginForm = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await fetch('/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-      // Check credentials
-      const isValidCredentials = Object.values(mockCredentials)?.some(
-        cred => cred?.email === formData?.email && cred?.password === formData?.password
-      );
+      const data = await response.json();
 
-      if (!isValidCredentials) {
-        setErrors({
-          general: currentLanguage === 'fa' 
-            ? `اطلاعات ورود نادرست است. لطفاً از اطلاعات زیر استفاده کنید:\nبیمار: ${mockCredentials?.patient?.email} / ${mockCredentials?.patient?.password}\nنمونه: ${mockCredentials?.demo?.email} / ${mockCredentials?.demo?.password}`
-            : `Invalid credentials. Please use:\nPatient: ${mockCredentials?.patient?.email} / ${mockCredentials?.patient?.password}\nDemo: ${mockCredentials?.demo?.email} / ${mockCredentials?.demo?.password}`
-        });
-        return;
+      if (!response.ok) {
+        throw new Error(data.message || 'Invalid credentials');
       }
 
       // Store user session
-      const userType = formData?.email === mockCredentials?.patient?.email ? 'patient' : 'demo';
       localStorage.setItem('userSession', JSON.stringify({
-        email: formData?.email,
-        name: mockCredentials?.[userType]?.name,
-        type: userType,
-        loginTime: new Date()?.toISOString(),
-        rememberMe: formData?.rememberMe
+        ...data,
+        rememberMe: formData.rememberMe,
       }));
 
       // Dispatch event for header to update
       window.dispatchEvent(new Event('sessionChanged'));
 
-      // Navigate to assessment
-      navigate('/multi-step-assessment');
+      // Navigate based on role
+      if (data.role === 'admin') {
+        navigate('/admin-dashboard');
+      } else {
+        // Default to patient view
+        // In a real app, you might want a dedicated patient dashboard first
+        // For now, we'll assume they go to take an assessment.
+        // This part needs a valid questionnaire ID.
+        // Hardcoding one for now as a placeholder.
+        navigate('/multi-step-assessment/60d5f2f9a9c8b4b2f8e1b9b1'); // Placeholder ID
+      }
 
     } catch (error) {
       setErrors({
-        general: currentLanguage === 'fa' ?'خطا در ورود. لطفاً دوباره تلاش کنید' :'Login failed. Please try again'
+        general: error.message || (currentLanguage === 'fa' ?'خطا در ورود. لطفاً دوباره تلاش کنید' :'Login failed. Please try again')
       });
     } finally {
       setIsLoading(false);

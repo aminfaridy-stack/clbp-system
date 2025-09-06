@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { postAssessment } from '../../store/slices/predictionSlice';
+import { submitAssessment } from '../../store/slices/assessmentSlice';
 import { useToast } from '../../context/ToastContext';
 import Header from '../../components/ui/Header';
 
@@ -14,10 +14,13 @@ import CompletionModal from './components/CompletionModal';
 
 const MultiStepAssessment = () => {
   const navigate = useNavigate();
+  const { questionnaireId } = useParams();
   const dispatch = useDispatch();
   const { addToast } = useToast();
   const [currentLanguage, setCurrentLanguage] = useState('en');
-  const [currentStep, setCurrentStep] = useState(1);
+  const [questionnaireData, setQuestionnaireData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentStep, setCurrentStep] = useState(0); // Zero-indexed
   const [responses, setResponses] = useState({});
   const [completedSteps, setCompletedSteps] = useState([]);
   const [selectedBodyRegions, setSelectedBodyRegions] = useState([]);
@@ -26,103 +29,34 @@ const MultiStepAssessment = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
 
-  const totalSteps = 10;
+  const totalSteps = questionnaireData?.questions?.length || 0;
+  const assessmentNames = questionnaireData?.questions?.map((q, index) =>
+    `${currentLanguage === 'fa' ? 'سوال' : 'Question'} ${index + 1}`
+  ) || [];
 
-  const assessmentNames = [
-    currentLanguage === 'fa' ? 'ترس از فعالیت (FABQ)' : 'Fear-Avoidance (FABQ)',
-    currentLanguage === 'fa' ? 'افسردگی (PHQ-9)' : 'Depression (PHQ-9)',
-    currentLanguage === 'fa' ? 'فاجعه‌سازی درد (PCS)' : 'Pain Catastrophizing (PCS)',
-    currentLanguage === 'fa' ? 'ترس از حرکت (TSK-11)' : 'Kinesiophobia (TSK-11)',
-    currentLanguage === 'fa' ? 'کیفیت خواب (PSQI)' : 'Sleep Quality (PSQI)',
-    currentLanguage === 'fa' ? 'سبک زندگی (HPLP II)' : 'Lifestyle (HPLP II)',
-    currentLanguage === 'fa' ? 'ناتوانی (RMDQ)' : 'Disability (RMDQ)',
-    currentLanguage === 'fa' ? 'شدت درد (NRS)' : 'Pain Intensity (NRS)',
-    currentLanguage === 'fa' ? 'نوردیک (NMQ)' : 'Nordic (NMQ)',
-    currentLanguage === 'fa' ? 'عملکرد اندام (LEFS)' : 'Lower Extremity (LEFS)'
-  ];
+  useEffect(() => {
+    const fetchQuestionnaire = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/questionnaires/${questionnaireId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch questionnaire');
+        }
+        const data = await response.json();
+        setQuestionnaireData(data);
+      } catch (error) {
+        console.error('Error fetching questionnaire:', error);
+        addToast('Failed to load assessment.', 'error');
+        navigate('/patient-login');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Mock questionnaire data
-  const questionnaires = {
-    1: {
-      title: currentLanguage === 'fa' ? 'پرسشنامه ترس از فعالیت (FABQ)' : 'Fear-Avoidance Beliefs Questionnaire (FABQ)',
-      code: 'FABQ',
-      description: currentLanguage === 'fa' ? 'ارزیابی باورهای مربوط به ترس از فعالیت و کار' : 'Assessment of fear-avoidance beliefs about physical activity and work',
-      instructions: currentLanguage === 'fa' ?'لطفاً هر گزینه را بر اساس میزان موافقت یا مخالفت خود با آن انتخاب کنید.' :'Please rate each statement based on how much you agree or disagree with it.',
-      questions: [
-        {
-          question: currentLanguage === 'fa' ? 'فعالیت بدنی باعث تشدید درد من می‌شود' : 'Physical activity makes my pain worse',
-          type: 'scale',
-          scaleMin: 0,
-          scaleMax: 6,
-          scaleLabels: { min: currentLanguage === 'fa' ? 'کاملاً مخالفم' : 'Completely Disagree', max: currentLanguage === 'fa' ? 'کاملاً موافقم' : 'Completely Agree' },
-          required: true
-        },
-        {
-          question: currentLanguage === 'fa' ? 'فعالیت بدنی ممکن است به کمرم آسیب برساند' : 'Physical activity might harm my back',
-          type: 'scale',
-          scaleMin: 0,
-          scaleMax: 6,
-          scaleLabels: { min: currentLanguage === 'fa' ? 'کاملاً مخالفم' : 'Completely Disagree', max: currentLanguage === 'fa' ? 'کاملاً موافقم' : 'Completely Agree' },
-          required: true
-        },
-        {
-          question: currentLanguage === 'fa' ? 'نباید کاری انجام دهم که ممکن است درد کمرم را بدتر کند' : 'I should not do physical activities which might make my pain worse',
-          type: 'scale',
-          scaleMin: 0,
-          scaleMax: 6,
-          scaleLabels: { min: currentLanguage === 'fa' ? 'کاملاً مخالفم' : 'Completely Disagree', max: currentLanguage === 'fa' ? 'کاملاً موافقم' : 'Completely Agree' },
-          required: true
-        }
-      ]
-    },
-    2: {
-      title: currentLanguage === 'fa' ? 'پرسشنامه افسردگی (PHQ-9)' : 'Patient Health Questionnaire (PHQ-9)',
-      code: 'PHQ-9',
-      description: currentLanguage === 'fa' ? 'ارزیابی علائم افسردگی در دو هفته گذشته' : 'Assessment of depression symptoms over the past two weeks',
-      instructions: currentLanguage === 'fa' ?'در طول دو هفته گذشته، چقدر توسط مشکلات زیر آزار شده‌اید؟' :'Over the last 2 weeks, how often have you been bothered by the following problems?',
-      questions: [
-        {
-          question: currentLanguage === 'fa' ? 'کم علاقگی یا عدم لذت از انجام کارها' : 'Little interest or pleasure in doing things',
-          type: 'radio',
-          options: [
-            { value: '0', label: currentLanguage === 'fa' ? 'اصلاً' : 'Not at all', score: 0 },
-            { value: '1', label: currentLanguage === 'fa' ? 'چند روز' : 'Several days', score: 1 },
-            { value: '2', label: currentLanguage === 'fa' ? 'بیش از نیمی از روزها' : 'More than half the days', score: 2 },
-            { value: '3', label: currentLanguage === 'fa' ? 'تقریباً هر روز' : 'Nearly every day', score: 3 }
-          ],
-          required: true
-        },
-        {
-          question: currentLanguage === 'fa' ? 'احساس غمگینی، افسردگی یا ناامیدی' : 'Feeling down, depressed, or hopeless',
-          type: 'radio',
-          options: [
-            { value: '0', label: currentLanguage === 'fa' ? 'اصلاً' : 'Not at all', score: 0 },
-            { value: '1', label: currentLanguage === 'fa' ? 'چند روز' : 'Several days', score: 1 },
-            { value: '2', label: currentLanguage === 'fa' ? 'بیش از نیمی از روزها' : 'More than half the days', score: 2 },
-            { value: '3', label: currentLanguage === 'fa' ? 'تقریباً هر روز' : 'Nearly every day', score: 3 }
-          ],
-          required: true
-        }
-      ]
-    },
-    9: {
-      title: currentLanguage === 'fa' ? 'پرسشنامه نوردیک (NMQ)' : 'Nordic Musculoskeletal Questionnaire (NMQ)',
-      code: 'NMQ',
-      description: currentLanguage === 'fa' ? 'ارزیابی درد و ناراحتی در نواحی مختلف بدن' : 'Assessment of pain and discomfort in different body regions',
-      instructions: currentLanguage === 'fa' ?'روی نقشه بدن، نواحی که در آن درد یا ناراحتی دارید را مشخص کنید.' :'On the body map, mark the areas where you experience pain or discomfort.',
-      questions: [
-        {
-          question: currentLanguage === 'fa' ? 'در 12 ماه گذشته، آیا در نواحی انتخاب شده درد یا ناراحتی داشته‌اید؟' : 'In the past 12 months, have you had pain or discomfort in the selected areas?',
-          type: 'radio',
-          options: [
-            { value: 'yes', label: currentLanguage === 'fa' ? 'بله' : 'Yes' },
-            { value: 'no', label: currentLanguage === 'fa' ? 'خیر' : 'No' }
-          ],
-          required: true
-        }
-      ]
+    if (questionnaireId) {
+      fetchQuestionnaire();
     }
-  };
+  }, [questionnaireId, navigate, addToast]);
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') || 'en';
@@ -199,7 +133,7 @@ const MultiStepAssessment = () => {
       setCompletedSteps(prev => [...prev, currentStep]);
     }
     
-    if (currentStep === totalSteps) {
+    if (currentStep === totalSteps - 1) { // -1 because currentStep is 0-indexed
       setShowCompletionModal(true);
     } else {
       setCurrentStep(prev => prev + 1);
@@ -219,31 +153,43 @@ const MultiStepAssessment = () => {
   };
 
   const handleCompleteAssessment = async () => {
-    // No need to autoSave here as we are submitting
-    const assessmentData = { responses, selectedBodyRegions };
+    const session = JSON.parse(localStorage.getItem('userSession'));
+    if (!session || !session._id) {
+      addToast('You must be logged in to submit an assessment.', 'error');
+      navigate('/patient-login');
+      return;
+    }
 
-    // Dispatch the thunk and unwrap the result
+    const assessmentData = {
+      patientId: session._id,
+      questionnaireId,
+      responses,
+      // Note: selectedBodyRegions is not part of the Assessment model yet.
+      // This will be ignored by the backend for now.
+    };
+
     try {
-      await dispatch(postAssessment(assessmentData)).unwrap();
-      // unwrap will throw an error if the thunk is rejected
-
+      await dispatch(submitAssessment(assessmentData)).unwrap();
       localStorage.removeItem('assessment_progress');
-      navigate('/assessment-results');
+      addToast('Assessment submitted successfully!', 'success');
+      navigate('/assessment-results'); // Or a patient dashboard
     } catch (err) {
-      // The predictionSlice will hold the error state, but we can also alert the user
       console.error('Failed to submit assessment:', err);
       addToast(currentLanguage === 'fa' ? 'خطا در ارسال ارزیابی. لطفاً دوباره تلاش کنید.' : 'Failed to submit assessment. Please try again.', 'error');
-      // Close the modal so the user can see the page again
       setShowCompletionModal(false);
     }
   };
 
-  const getCurrentQuestionnaire = () => {
-    return questionnaires?.[currentStep] || {
-      title: `${currentLanguage === 'fa' ? 'ارزیابی' : 'Assessment'} ${currentStep}`,
-      code: `STEP-${currentStep}`,
-      description: currentLanguage === 'fa' ? 'ارزیابی در حال بارگذاری...' : 'Loading assessment...',
-      questions: []
+  const getCurrentQuestion = () => {
+    if (!questionnaireData || !questionnaireData.questions) return null;
+    const question = questionnaireData.questions[currentStep];
+    // We need to wrap it in a 'questionnaire' like object for QuestionnaireForm
+    return {
+      title: question.text,
+      code: `Q${currentStep + 1}`,
+      description: '', // Individual questions don't have descriptions
+      instructions: '', // Or instructions
+      questions: [question] // Pass the single question in an array
     };
   };
 
@@ -251,6 +197,24 @@ const MultiStepAssessment = () => {
     totalAnswered: Object.keys(responses)?.length + (selectedBodyRegions?.length > 0 ? 1 : 0),
     completedSections: completedSteps?.length
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p>Loading assessment...</p>
+      </div>
+    );
+  }
+
+  if (!questionnaireData) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p>Could not load assessment. Please try again later.</p>
+      </div>
+    );
+  }
+
+  const currentQuestion = questionnaireData.questions[currentStep];
 
   return (
     <div className="min-h-screen bg-background">
@@ -260,11 +224,10 @@ const MultiStepAssessment = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground font-heading">
-                {currentLanguage === 'fa' ? 'ارزیابی چندمرحله‌ای CLBP' : 'CLBP Multi-Step Assessment'}
+                {questionnaireData.title}
               </h1>
               <p className="text-muted-foreground mt-1">
-                {currentLanguage === 'fa' ?'ارزیابی جامع برای پیش‌بینی درد مزمن کمر' :'Comprehensive assessment for chronic low back pain prediction'
-                }
+                {questionnaireData.description}
               </p>
             </div>
             
@@ -339,7 +302,7 @@ const MultiStepAssessment = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {currentStep === 9 ? (
+            {currentQuestion && currentQuestion.questionType === 'bodymap' ? (
               <div className="space-y-6">
                 <BodyMapSVG
                   selectedRegions={selectedBodyRegions}
@@ -349,29 +312,29 @@ const MultiStepAssessment = () => {
                 
                 <QuestionnaireForm
                   currentStep={currentStep}
-                  questionnaire={getCurrentQuestionnaire()}
+                  questionnaire={getCurrentQuestion()}
                   responses={responses}
                   onResponseChange={handleResponseChange}
                   onNext={handleNext}
                   onPrevious={handlePrevious}
                   onSaveAndExit={handleSaveAndExit}
                   currentLanguage={currentLanguage}
-                  isFirstStep={currentStep === 1}
-                  isLastStep={currentStep === totalSteps}
+                  isFirstStep={currentStep === 0}
+                  isLastStep={currentStep === totalSteps - 1}
                 />
               </div>
             ) : (
               <QuestionnaireForm
                 currentStep={currentStep}
-                questionnaire={getCurrentQuestionnaire()}
+                questionnaire={getCurrentQuestion()}
                 responses={responses}
                 onResponseChange={handleResponseChange}
                 onNext={handleNext}
                 onPrevious={handlePrevious}
                 onSaveAndExit={handleSaveAndExit}
                 currentLanguage={currentLanguage}
-                isFirstStep={currentStep === 1}
-                isLastStep={currentStep === totalSteps}
+                isFirstStep={currentStep === 0}
+                isLastStep={currentStep === totalSteps - 1}
               />
             )}
           </div>
