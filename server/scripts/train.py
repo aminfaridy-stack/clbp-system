@@ -13,38 +13,29 @@ import numpy as np
 import joblib
 import pickle
 from bson.binary import Binary
+from bson.objectid import ObjectId
 
-def train_model(model_id, model_type, test_size, random_state):
+def train_model(model_id, model_type, file_path, test_size, random_state):
     client = MongoClient('mongodb://localhost:27017/')
     db = client['clbp-predictive-system']
 
     try:
-        # --- 1. Fetch data ---
-        answers_cursor = db.answers.find({})
-        records = []
-        for answer_doc in answers_cursor:
-            record = {'patientId': answer_doc.get('patientId')}
-            for response in answer_doc.get('responses', []):
-                question_text = db.questions.find_one({'_id': response.get('questionId')}).get('text', 'unknown_question')
-                record[question_text] = response.get('answer')
-            record['target_outcome'] = answer_doc.get('target_outcome', 0)
-            records.append(record)
+        # --- 1. Load data from the provided file ---
+        if not file_path.endswith('.csv'):
+            raise ValueError("Only .csv files are currently supported.")
 
-        if not records:
-            raise ValueError("No data found in 'answers' collection.")
-
-        df = pd.DataFrame(records)
-        df.set_index('patientId', inplace=True)
+        df = pd.read_csv(file_path)
 
         # --- 2. Preprocess Data ---
-        X = df.drop('target_outcome', axis=1)
-        y = df['target_outcome']
+        # Assuming the last column is the target variable
+        X = df.iloc[:, :-1]
+        y = df.iloc[:, -1]
 
         categorical_features = X.select_dtypes(include=['object']).columns
-        encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
-        encoded_features = pd.DataFrame(encoder.fit_transform(X[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
-
-        X = pd.concat([X.drop(categorical_features, axis=1), encoded_features], axis=1)
+        if not categorical_features.empty:
+            encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
+            encoded_features = pd.DataFrame(encoder.fit_transform(X[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
+            X = pd.concat([X.drop(categorical_features, axis=1), encoded_features], axis=1)
 
         # --- 3. Split Data ---
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
@@ -92,7 +83,7 @@ def train_model(model_id, model_type, test_size, random_state):
     except Exception as e:
         db.predictionmodels.update_one(
             {'_id': model_id},
-            {'$set': {'status': 'failed'}}
+            {'$set': {'status': 'failed', 'performance': {'error': str(e)}}}
         )
         print(json.dumps({"status": "error", "message": str(e)}))
     finally:
@@ -103,12 +94,16 @@ if __name__ == '__main__':
         model_id_str = sys.argv[1]
         config = json.loads(sys.argv[2])
 
-        from bson.objectid import ObjectId
         model_id = ObjectId(model_id_str)
 
         model_type = config.get('modelType', 'LogisticRegression')
-        test_size = float(config.get('testSize', 0.2))
-        random_state = int(config.get('randomState', 42))
-        train_model(model_id, model_type, test_size, random_state)
+        file_path = config.get('filePath')
+        test_size = float(config.get('parameters', {}).get('testSize', 0.2))
+        random_state = int(config.get('parameters', {}).get('randomState', 42))
+
+        if not file_path:
+            print(json.dumps({"status": "error", "message": "filePath is required."}))
+        else:
+            train_model(model_id, model_type, file_path, test_size, random_state)
     else:
         print(json.dumps({"status": "error", "message": "Missing modelId or configuration."}))

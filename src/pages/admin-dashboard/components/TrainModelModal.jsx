@@ -8,6 +8,8 @@ const TrainModelModal = ({ isOpen, onClose, onModelTrained, currentLanguage }) =
   const [name, setName] = useState('');
   const [modelType, setModelType] = useState('LogisticRegression');
   const [testSize, setTestSize] = useState(0.2);
+  const [filePath, setFilePath] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [isTraining, setIsTraining] = useState(false);
   const [error, setError] = useState(null);
 
@@ -25,13 +27,41 @@ const TrainModelModal = ({ isOpen, onClose, onModelTrained, currentLanguage }) =
     { value: 0.4, label: '60% Train / 40% Test' },
   ];
 
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('datafile', file);
+
+    setIsUploading(true);
+    setError(null);
+    try {
+      const { data } = await axios.post('/api/data/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setFilePath(data.filePath);
+    } catch (err) {
+      setError('File upload failed.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleTrain = async () => {
+    if (!filePath) {
+      setError('Please upload a data file first.');
+      return;
+    }
     setIsTraining(true);
     setError(null);
     try {
       const payload = {
         name,
         modelType,
+        filePath,
         parameters: {
           testSize: testSize,
         },
@@ -75,6 +105,19 @@ const TrainModelModal = ({ isOpen, onClose, onModelTrained, currentLanguage }) =
             value={testSize}
             onChange={(e) => setTestSize(parseFloat(e.target.value))}
           />
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              {currentLanguage === 'fa' ? 'فایل داده (CSV)' : 'Data File (CSV)'}
+            </label>
+            <Input
+              type="file"
+              accept=".csv"
+              onChange={handleFileChange}
+              disabled={isUploading}
+            />
+            {isUploading && <p className="text-sm text-muted-foreground mt-1">{currentLanguage === 'fa' ? 'در حال بارگذاری...' : 'Uploading...'}</p>}
+            {filePath && <p className="text-sm text-green-500 mt-1">{currentLanguage === 'fa' ? 'فایل با موفقیت بارگذاری شد.' : 'File uploaded successfully.'}</p>}
+          </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
         <div className="p-6 border-t border-border flex justify-end space-x-2 rtl:space-x-reverse">

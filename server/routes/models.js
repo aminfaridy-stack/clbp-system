@@ -8,7 +8,11 @@ const router = express.Router();
 // @route   POST /api/models/train
 // @access  Private/Admin
 router.post('/train', async (req, res) => {
-  const { name, modelType, parameters } = req.body;
+  const { name, modelType, parameters, filePath } = req.body;
+
+  if (!filePath) {
+    return res.status(400).json({ message: 'No data file provided for training.' });
+  }
 
   try {
     // Create a new model document to track the training process
@@ -24,7 +28,7 @@ router.post('/train', async (req, res) => {
     const pythonProcess = spawn('python', [
       'server/scripts/train.py',
       savedModel._id.toString(),
-      JSON.stringify({ modelType, ...parameters }),
+      JSON.stringify({ modelType, ...parameters, filePath }),
     ]);
 
     pythonProcess.stderr.on('data', (data) => {
