@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
 import LanguageToggle from '../../components/ui/LanguageToggle';
@@ -137,11 +138,6 @@ const AdminDashboard = () => {
       icon: 'Activity'
     },
     {
-      id: 'questionnaires',
-      name: currentLanguage === 'fa' ? 'پرسشنامه‌ها' : 'Questionnaires',
-      icon: 'ClipboardList'
-    },
-    {
       id: 'settings',
       name: currentLanguage === 'fa' ? 'تنظیمات' : 'Settings',
       icon: 'Settings'
@@ -174,6 +170,41 @@ const AdminDashboard = () => {
       `داده‌ها در فرمت ${format} صادر شد` : 
       `Data exported in ${format} format`
     );
+  };
+
+  const handleDownloadDetailedReport = async () => {
+    try {
+      const response = await axios.get('/api/reports/detailed-data', {
+        responseType: 'blob', // Important to handle the file download
+      });
+
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Extract filename from content-disposition header if available
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'detailed_report.csv';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch.length > 1) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      link.setAttribute('download', filename);
+
+      // Append to html, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      alert(currentLanguage === 'fa' ? 'خطا در دانلود گزارش.' : 'Failed to download report.');
+    }
   };
 
   if (isLoading) {
@@ -231,13 +262,7 @@ const AdminDashboard = () => {
                 {viewTabs?.map((tab) => (
                   <button
                     key={tab?.id}
-                    onClick={() => {
-                      if (tab.id === 'questionnaires') {
-                        navigate('/questionnaire-management');
-                      } else {
-                        setActiveView(tab?.id);
-                      }
-                    }}
+                    onClick={() => setActiveView(tab.id)}
                     className={`flex items-center space-x-2 rtl:space-x-reverse px-4 py-2 rounded-md text-sm font-medium transition-clinical whitespace-nowrap ${
                       activeView === tab?.id
                         ? 'bg-primary text-primary-foreground'
@@ -344,11 +369,11 @@ const AdminDashboard = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => alert(currentLanguage === 'fa' ? 'دسترسی به گزارشات تفصیلی' : 'Accessing audit logs')}
+                    onClick={handleDownloadDetailedReport}
                     iconName="FileText"
                     iconPosition="left"
                   >
-                    {currentLanguage === 'fa' ? 'گزارشات تفصیلی' : 'Audit Logs'}
+                    {currentLanguage === 'fa' ? 'گزارشات تفصیلی' : 'Detailed Reports'}
                   </Button>
                   
                   <Button

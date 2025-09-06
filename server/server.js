@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import questionnaireRoutes from './routes/questionnaires.js';
 import settingsRoutes from './routes/settings.js';
+import reportsRoutes from './routes/reports.js';
 import Setting from './models/Setting.js';
 
 // Load env vars
@@ -24,6 +25,7 @@ const startServer = async () => {
     // API Routes
     app.use('/api/questionnaires', questionnaireRoutes);
     app.use('/api/settings', settingsRoutes);
+    app.use('/api/reports', reportsRoutes);
 
     // Sample route for API (can be removed later)
     app.get('/api/data', (req, res) => {

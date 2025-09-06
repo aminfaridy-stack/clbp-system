@@ -3,6 +3,7 @@ import axios from 'axios';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Icon from '../../../components/AppIcon';
+import QuestionnaireManager from './QuestionnaireManager';
 
 const SettingsPanel = ({ currentLanguage }) => {
   const [settings, setSettings] = useState({
@@ -122,6 +123,10 @@ const SettingsPanel = ({ currentLanguage }) => {
           </Button>
         </div>
       </div>
+
+      <div className="my-8 border-b border-border"></div>
+
+      <QuestionnaireManager currentLanguage={currentLanguage} />
     </div>
   );
 };
