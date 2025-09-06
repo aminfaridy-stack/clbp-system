@@ -4,6 +4,9 @@ import connectDB from './config/db.js';
 import questionnaireRoutes from './routes/questionnaires.js';
 import settingsRoutes from './routes/settings.js';
 import reportsRoutes from './routes/reports.js';
+import userRoutes from './routes/users.js';
+import predictRoutes from './routes/predict.js';
+import dataRoutes from './routes/data.js';
 import Setting from './models/Setting.js';
 
 // Load env vars
@@ -26,11 +29,9 @@ const startServer = async () => {
     app.use('/api/questionnaires', questionnaireRoutes);
     app.use('/api/settings', settingsRoutes);
     app.use('/api/reports', reportsRoutes);
-
-    // Sample route for API (can be removed later)
-    app.get('/api/data', (req, res) => {
-      res.json({ message: 'Data from backend', data: [1, 2, 3] });
-    });
+    app.use('/api/users', userRoutes);
+    app.use('/api/predict', predictRoutes);
+    app.use('/api/data', dataRoutes);
 
     app.listen(port, () => {
       console.log(`Backend server running at http://localhost:${port}`);
